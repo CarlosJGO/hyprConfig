@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Control centralizado de mpvpaper. Sólo se reproduce en un workspace vacío.
+
+set -u
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+WALLPAPER_SCRIPT="$SCRIPT_DIR/random-wallpaper-animado.sh"
+
+should_pause() {
+    local active_workspace clients
+
+    active_workspace="$(hyprctl -j activeworkspace 2>/dev/null)" || return 2
+    clients="$(hyprctl -j clients 2>/dev/null)" || return 2
+    [[ "$active_workspace" == \{* && "$clients" == \[* ]] || return 2
+
+    jq -e --arg workspace "$(jq -r '.name // empty' <<<"$active_workspace")" '
+        any(.[];
+            (.pinned // false) or
+            (
+                (.workspace.name // "") == $workspace and
+                (.mapped // true) and
+                ((.hidden // false) | not)
+            )
+        )
+    ' >/dev/null <<<"$clients"
+}
+
+start_player() {
+    local mode="$1"
+    local current_no_audio=0
+
+    if mpvpaper_running; then
+        if mpvpaper_running_no_audio; then
+            current_no_audio=1
+        else
+            current_no_audio=0
+        fi
+    fi
+
+    if [ "$mode" = "audio" ] && [ "$current_no_audio" -eq 0 ] && mpvpaper_running; then
+        return 0
+    fi
+
+    if [ "$mode" = "no-audio" ] && [ "$current_no_audio" -eq 1 ] && mpvpaper_running; then
+        return 0
+    fi
+
+    stop_player
+    if [ "$mode" = "audio" ]; then
+        export MPV_OPTIONS='loop'
+    else
+        export MPV_OPTIONS='no-audio loop'
+    fi
+    "$WALLPAPER_SCRIPT" --resume
+}
+
+case "${1:-update}" in
+    pause)
+        stop_player
+        ;;
+    resume)
+        resume
+        ;;
+    update)
+        if workspace_should_stop; then
+            stop_player
+            exit 0
+        fi
+
+        if workspace_has_client; then
+            start_player no-audio
+        else
+            start_player audio
+        fi
+        ;;
+    *)
+        echo "Uso: $0 {pause|resume|update}" >&2
+        exit 2
+        ;;
+esac
