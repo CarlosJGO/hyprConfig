@@ -153,3 +153,18 @@ hl.bind(mainMod .. " + ALT + CONTROL + Space", hl.dsp.workspace.toggle_special("
 -- Special workspace (scratchpad)
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special" }))
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special())
+
+-- pasar todas las ventanas de un workspace a otro
+hl.bind(
+    mainMod .. " + CONTROL + SHIFT + Up",
+    hl.dsp.exec_cmd(
+        "python ~/.config/hypr/scripts/move_workspace_contents.py +1 " .. NUM_WPM
+    )
+)
+
+hl.bind(
+    mainMod .. " + CONTROL + SHIFT + Down",
+    hl.dsp.exec_cmd(
+        "python ~/.config/hypr/scripts/move_workspace_contents.py -1 " .. NUM_WPM
+    )
+)
