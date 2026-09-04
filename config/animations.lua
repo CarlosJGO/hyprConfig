@@ -109,6 +109,14 @@ hl.curve("snappy", {
     }
 })
 
+-- Curva de aceleración tipo gravedad
+hl.curve("gravity", {
+    type = "bezier",
+    points = {
+        {0.55, 0},
+        {1, 1},
+    },
+})
 
 -- ============================================================
 -- SPRINGS
@@ -334,11 +342,3 @@ hl.animation({
     bezier = "gravity",
 })
 
--- Curva de aceleración tipo gravedad
-hl.curve("gravity", {
-    type = "bezier",
-    points = {
-        {0.55, 0},
-        {1, 1},
-    },
-})
