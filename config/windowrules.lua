@@ -53,6 +53,19 @@ hl.window_rule({
     focus_on_activate = true,
 })
 
+hl.window_rule({
+    name = "SHELL-TASKS",
+    match = {
+        title = "^Jugoo Tasks$",
+    },
+    float = true,
+    center = false,
+    persistent_size = false,
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
+})
+
 -- Picture-in-Picture
 hl.window_rule({
     match             = { title = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$" },
