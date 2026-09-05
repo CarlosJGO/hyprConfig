@@ -1,9 +1,9 @@
 -- Window rules wiki https://wiki.hypr.land/Configuring/Basics/Window-Rules/
 
--- Shell popups (~/.config/waybar/shell): positioned by the shell, not Hyprland.
+-- Jugoo popups: positioned by the shell, not Hyprland.
 hl.window_rule({
     name = "shell-popups",
-    match = { title = "^Shell " },
+    match = { title = "^Jugoo " },
     float = true,
     center = false,
     persistent_size = false,
@@ -17,8 +17,8 @@ hl.window_rule({
 hl.window_rule({
     name = "NO-FOCUS-SHELL-NOTIFICATIONS",
     match = {
-        class = "^__main__\\.py$",
-        title = "^Shell Notification Toast",
+        class = "^com\\.jugoo\\.Shell$",
+        title = "^Jugoo Notification Toast",
     },
     no_focus = true,
     no_initial_focus = true,
@@ -29,8 +29,21 @@ hl.window_rule({
 hl.window_rule({
     name = "SHELL-NOTIFICATION-GROUP",
     match = {
-        class = "^__main__\\.py$",
-        title = "^Shell Notification Group$",
+        class = "^com\\.jugoo\\.Shell$",
+        title = "^Jugoo Notification Group$",
+    },
+    float = true,
+    center = false,
+    persistent_size = false,
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
+})
+
+hl.window_rule({
+    name = "SHELL-APP-LAUNCHER",
+    match = {
+        title = "^Jugoo Launcher$",
     },
     float = true,
     center = false,

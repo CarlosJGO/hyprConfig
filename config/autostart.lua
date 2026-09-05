@@ -9,5 +9,5 @@ hl.on("hyprland.start", function ()
 
     --hl.exec_cmd("/bin/sh -c 'mkdir -p \"${XDG_RUNTIME_DIR}/wallpaper-engine\" && systemctl --user daemon-reload && systemctl --user reset-failed wallpaper-auto.service 2>/dev/null; systemctl --user stop wallpaper-auto.service 2>/dev/null; systemctl --user start wallpaper-auto.service'")
 
-    hl.exec_cmd("/bin/sh -c 'cd /home/carlosjgo/.config/jugoo && exec python3 -m shell'")
+    hl.exec_cmd("/bin/sh -c 'exec \"${XDG_BIN_HOME:-$HOME/.local/bin}/jugoo\"'")
 end)
