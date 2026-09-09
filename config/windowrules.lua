@@ -54,6 +54,45 @@ hl.window_rule({
 })
 
 hl.window_rule({
+    name = "SHELL-CLIPBOARD-PICKER",
+    match = {
+        title = "^Jugoo Clipboard$",
+    },
+    float = true,
+    center = false,
+    persistent_size = false,
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
+})
+
+hl.window_rule({
+    name = "SHELL-EMOJI-PICKER",
+    match = {
+        title = "^Jugoo Emoji$",
+    },
+    float = true,
+    center = false,
+    persistent_size = false,
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
+})
+
+hl.window_rule({
+    name = "SHELL-SETTINGS",
+    match = {
+        title = "^Jugoo Configuraciones$",
+    },
+    float = true,
+    center = false,
+    persistent_size = false,
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
+})
+
+hl.window_rule({
     name = "SHELL-TASKS",
     match = {
         title = "^Jugoo Tasks$",

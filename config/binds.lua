@@ -60,7 +60,7 @@ hl.bind(mainMod .. " + W",          hl.dsp.exec_cmd(launchPrefix .. BROWSER))
 hl.bind(mainMod .. " + Z",          hl.dsp.exec_cmd(noctCall .. "settings-toggle"))
 hl.bind(mainMod .. " + X",          hl.dsp.exec_cmd(noctCall .. "panel-toggle control-center"))
 hl.bind(mainMod .. " + Space",      hl.dsp.exec_cmd("/bin/sh -c '\"${XDG_BIN_HOME:-$HOME/.local/bin}/jugoo\" --toggle-launcher'"))
-hl.bind(mainMod .. " + period",     hl.dsp.exec_cmd(noctCall .. "panel-toggle launcher /emo"))
+hl.bind(mainMod .. " + period",     hl.dsp.exec_cmd("/bin/sh -c '\"${XDG_BIN_HOME:-$HOME/.local/bin}/jugoo\" --toggle-emoji'"))
 hl.bind(mainMod .. " + L",          hl.dsp.exec_cmd(noctCall .. "session lock"))
 hl.bind(mainMod .. " + ALT + C",    hl.dsp.exec_cmd(noctCall .. "panel-toggle session"))
 
@@ -107,7 +107,7 @@ hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("flameshot full -p $HOME/Pict
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(noctCall .. "panel-toggle wallpaper"))
 
 -- Clipboard
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(noctCall .. "panel-toggle clipboard"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("/bin/sh -c '\"${XDG_BIN_HOME:-$HOME/.local/bin}/jugoo\" --toggle-clipboard'"))
 
 -- Notifications
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(noctCall .. "panel-toggle control-center notifications"))

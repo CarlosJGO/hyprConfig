@@ -1,5 +1,6 @@
 -- Animations
 -- https://wiki.hypr.land/Configuring/Advanced-and-Cool/Animations/
+-- Transiciones suaves y responsivas (~300–400 ms)
 
 -- ============================================================
 -- BEZIER CURVES
@@ -77,11 +78,30 @@ hl.curve("quick", {
     }
 })
 
+-- Entrada/salida suave sin freno brusco
 hl.curve("smooth", {
     type = "bezier",
     points = {
-        {0.25, 0.1},
-        {0.25, 1},
+        {0.22, 0.61},
+        {0.36, 1},
+    }
+})
+
+-- Desaceleración elegante (ventanas / fade)
+hl.curve("smoothOut", {
+    type = "bezier",
+    points = {
+        {0.16, 1},
+        {0.3, 1},
+    }
+})
+
+-- Transiciones bidireccionales (workspaces, move)
+hl.curve("smoothIO", {
+    type = "bezier",
+    points = {
+        {0.45, 0.05},
+        {0.55, 0.95},
     }
 })
 
@@ -109,7 +129,6 @@ hl.curve("snappy", {
     }
 })
 
--- Curva de aceleración tipo gravedad
 hl.curve("gravity", {
     type = "bezier",
     points = {
@@ -129,11 +148,12 @@ hl.curve("easy", {
     dampening = 35,
 })
 
+-- Suave y bien amortiguado (sin rebote perceptible)
 hl.curve("soft", {
     type = "spring",
     mass = 1,
-    stiffness = 300,
-    dampening = 30,
+    stiffness = 280,
+    dampening = 32,
 })
 
 hl.curve("bouncy", {
@@ -158,8 +178,8 @@ hl.curve("rubber", {
 hl.animation({
     leaf = "global",
     enabled = true,
-    speed = 3,
-    bezier = "quick",
+    speed = 4,
+    bezier = "smoothOut",
 })
 
 
@@ -167,28 +187,38 @@ hl.animation({
 -- WINDOWS
 -- ============================================================
 
--- Apertura / cierre de ventanas
 hl.animation({
     leaf = "windows",
     enabled = true,
-    speed = 3,
-    spring = "easy",
+    speed = 4,
+    spring = "soft",
     style = "slide",
 })
 
--- Movimiento físico de ventanas.
--- IMPORTANTE:
--- Nuestro move_workspace_contents.py utiliza:
---
--- hl.dsp.window.move(...)
---
--- por lo que estos movimientos pasan por windowsMove.
+-- Movimiento físico (también usado por move_workspace_contents.py vía hl.dsp.window.move)
 hl.animation({
     leaf = "windowsMove",
     enabled = true,
     speed = 4,
-    bezier = "easeOutQuint",
+    bezier = "smoothIO",
     style = "slide",
+})
+
+hl.animation({
+    leaf = "windowsIn",
+    enabled = true,
+    speed = 4,
+    bezier = "smoothOut",
+    style = "popin 80%",
+})
+
+-- Salida: caída hacia abajo
+hl.animation({
+    leaf = "windowsOut",
+    enabled = true,
+    speed = 5,
+    bezier = "gravity",
+    style = "slide bottom",
 })
 
 
@@ -196,12 +226,11 @@ hl.animation({
 -- WORKSPACES
 -- ============================================================
 
--- Cambio normal de workspace
 hl.animation({
     leaf = "workspaces",
     enabled = true,
-    speed = 5,
-    bezier = "quick",
+    speed = 4,
+    bezier = "smoothIO",
     style = "slide",
 })
 
@@ -213,8 +242,8 @@ hl.animation({
 hl.animation({
     leaf = "specialWorkspaceIn",
     enabled = true,
-    speed = 3,
-    bezier = "easeOutQuint",
+    speed = 4,
+    bezier = "smoothOut",
     style = "slide top",
 })
 
@@ -222,7 +251,7 @@ hl.animation({
     leaf = "specialWorkspaceOut",
     enabled = true,
     speed = 3,
-    bezier = "easeOutQuint",
+    bezier = "smooth",
     style = "slide bottom",
 })
 
@@ -234,8 +263,8 @@ hl.animation({
 hl.animation({
     leaf = "layers",
     enabled = true,
-    speed = 4,
-    bezier = "quick",
+    speed = 3,
+    bezier = "smoothOut",
     style = "slide",
 })
 
@@ -248,28 +277,35 @@ hl.animation({
     leaf = "fadeIn",
     enabled = true,
     speed = 3,
-    bezier = "easeOutQuint",
+    bezier = "smoothOut",
 })
 
 hl.animation({
     leaf = "fadeOut",
     enabled = true,
-    speed = 3,
-    bezier = "easeOutQuint",
+    speed = 5,
+    bezier = "gravity",
 })
 
 hl.animation({
     leaf = "fadeSwitch",
     enabled = true,
-    speed = 4,
-    bezier = "quick",
+    speed = 3,
+    bezier = "smoothIO",
 })
 
 hl.animation({
     leaf = "fadeShadow",
     enabled = true,
     speed = 3,
-    bezier = "easeOutQuint",
+    bezier = "smoothOut",
+})
+
+hl.animation({
+    leaf = "fadeDim",
+    enabled = true,
+    speed = 3,
+    bezier = "smoothOut",
 })
 
 
@@ -281,7 +317,7 @@ hl.animation({
     leaf = "border",
     enabled = true,
     speed = 3,
-    bezier = "quick",
+    bezier = "smoothOut",
 })
 
 hl.animation({
@@ -290,55 +326,3 @@ hl.animation({
     speed = 30,
     bezier = "linear",
 })
-
-
--- ============================================================
--- DIM
--- ============================================================
-
-hl.animation({
-    leaf = "fadeDim",
-    enabled = true,
-    speed = 3,
-    bezier = "easeOutQuint",
-})
-
-
--- ============================================================
--- WINDOW CLOSE / OPEN
--- ============================================================
-
--- Entrada
-hl.animation({
-    leaf = "windowsIn",
-    enabled = true,
-    speed = 3,
-    bezier = "easeOutQuint",
-    style = "popin 70%",
-})
-
--- Salida: caída hacia abajo
-hl.animation({
-    leaf = "windowsOut",
-    enabled = true,
-    speed = 5,
-    bezier = "gravity",
-    style = "slide bottom",
-})
-
--- Opacidad de entrada
-hl.animation({
-    leaf = "fadeIn",
-    enabled = true,
-    speed = 3,
-    bezier = "easeOutQuint",
-})
-
--- Opacidad de salida
-hl.animation({
-    leaf = "fadeOut",
-    enabled = true,
-    speed = 5,
-    bezier = "gravity",
-})
-
