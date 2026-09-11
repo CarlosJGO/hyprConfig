@@ -121,6 +121,15 @@ hl.curve("smoothOvershoot", {
     }
 })
 
+-- Gelatina vía spring: el overshoot anima realSize (contenido + marco juntos).
+-- No usar bezier con Y>1 en popin: Hyprland estira solo bordes (#8058).
+hl.curve("jelly", {
+    type = "spring",
+    mass = 1,
+    stiffness = 400,
+    dampening = 16,
+})
+
 hl.curve("snappy", {
     type = "bezier",
     points = {
@@ -195,21 +204,22 @@ hl.animation({
     style = "slide",
 })
 
--- Movimiento físico (también usado por move_workspace_contents.py vía hl.dsp.window.move)
+-- Movimiento / resize (maximize, fullscreen, drag, float_place…)
+-- Un poco más lento para que al maximizar se vea cómo “consume” a las de debajo.
 hl.animation({
     leaf = "windowsMove",
     enabled = true,
-    speed = 4,
-    bezier = "smoothIO",
+    speed = 5,
+    bezier = "smoothOut",
     style = "slide",
 })
 
 hl.animation({
     leaf = "windowsIn",
     enabled = true,
-    speed = 4,
-    bezier = "smoothOut",
-    style = "popin 80%",
+    speed = 5,
+    spring = "jelly",
+    style = "popin 55%",
 })
 
 -- Salida: caída hacia abajo

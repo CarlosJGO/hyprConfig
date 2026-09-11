@@ -5,9 +5,7 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("noctalia")
     hl.exec_cmd("waywallen")
     hl.exec_cmd("xhost +SI:localuser:root")
-    --hl.exec_cmd("/home/carlosjgo/.config/hypr/scripts/special_backgrounds.py")
-
-    --hl.exec_cmd("/bin/sh -c 'mkdir -p \"${XDG_RUNTIME_DIR}/wallpaper-engine\" && systemctl --user daemon-reload && systemctl --user reset-failed wallpaper-auto.service 2>/dev/null; systemctl --user stop wallpaper-auto.service 2>/dev/null; systemctl --user start wallpaper-auto.service'")
-
+    hl.exec_cmd("touch /tmp/hypr-start-ran")
+    hl.exec_cmd("sh -c 'qs -c overview > /tmp/jugoo-overview.log 2>&1 &'")
     hl.exec_cmd("/bin/sh -c 'exec \"${XDG_BIN_HOME:-$HOME/.local/bin}/jugoo\"'")
 end)

@@ -10,23 +10,42 @@ Entrada Lua: `~/.config/hypr/hyprland.lua`
 | Qué | Dónde |
 |-----|--------|
 | Lista para agregar/quitar a mano | `~/.config/hypr/config/juguetes.lua` → tabla `juguetes` |
-| Binds | `SUPER + Home` (tiled) · `SUPER + SHIFT + Home` (floating) |
+| Binds | `SUPER + Home` (tiled) · `SUPER + SHIFT + Home` (rejilla flotante) |
 
-Cada entrada es `{ name = "...", run = "comando args" }`.  
-Ejemplo para agregar uno:
+Cada entrada:
 
 ```lua
-{ name = "htop", run = "htop" },
+{
+  name = "cbonsai",
+  run = "cbonsai -l",
+  -- opcional, solo SHIFT+Home (floating):
+  size = { "monitor_w * 0.18", "monitor_h * 0.58" },
+  -- opcional: kitty más chico = más “píxeles” (lavat, etc.)
+  font_size = 7,
+},
 ```
 
 **Comportamiento útil**
 
-- Es **toggle**: si ya hay ventanas `juguete:*`, la próxima pulsación las mata y limpia huérfanos (`pipes.sh`, `cmatrix`, etc.).
-- En floating, el **tamaño escala con la cantidad** (`float_size_for_count`): más juguetes → ventanas más chicas.
-- Se abren **escalonados** (~280 ms) para que corra la animación `windowsIn`.
-- Se lanzan con kitty directo (sin `uwsm`) para que el PID coincida con la ventana: float rules + kill limpian bien el proceso hijo.
+- Es **toggle**: si ya hay ventanas `juguete:*`, la próxima pulsación las mata y limpia huérfanos.
+- **Home (tiled):** spawnea sin float; antes de cada una enfoca la juguete más grande y mueve el cursor a su centro, para que dwindle parta espacio de forma más pareja sin seguir tu mouse. `size` no aplica (lo decide el layout).
+- **SHIFT+Home (floating):** rejilla fija; `size` custom se centra en su celda. Sin `size` → celda uniforme.
+- `font_size` baja la fuente de kitty para que demos ASCII (p. ej. lavat) se vean en ventanas chicas.
+- Escalados (~240 ms) entre spawns.
+- Kitty directo (sin `uwsm`) para reglas + kill limpios.
 
-Juguetes actuales: `cmatrix`, `lavat`, `pipes.sh`, `cava`, `cbonsai -l`, `genact`, `asciiquarium`.
+Juguetes actuales: `cmatrix`, `lavat` (font 7 + radio chico), `pipes.sh`, `cava`, `cbonsai` (vertical), `genact`, `asciiquarium`, `tty-clock` (centrado + segundos, `nyancat`.
+
+## Cómo añadir otro la próxima vez
+Archivo: ~/.config/hypr/config/juguetes.lua
+Instala el binario (tty-clock, cmatrix, etc.).
+Añade una fila en la tabla juguetes:
+{ name = "mi-toy", run = "mi-toy --flags" },
+-- opcional:
+-- font_size = 7,
+-- size = { "monitor_w * 0.28", "monitor_h * 0.22" },  -- solo floating
+Limpieza al cerrar — en cleanup_orphan_toys(), un pkill del proceso ( -x si es un binario limpio; -f si es script/ruta).
+hyprctl reload.
 
 ---
 
@@ -37,10 +56,20 @@ Juguetes actuales: `cmatrix`, `lavat`, `pipes.sh`, `cava`, `cbonsai -l`, `genact
 | Lógica | `~/.config/hypr/config/float_place.lua` |
 | Carga | `require("config.float_place")` en `hyprland.lua` |
 
-Hyprland **no** tiene una windowrule nativa de “si solapa, muévete”.  
-Al evento `window.open`, si la ventana es flotante y se monta encima de otra del mismo workspace, busca un hueco en el monitor y la desplaza con `hl.dsp.window.move` — animado por `windowsMove` (curva smooth en `animations.lua`).
+**Opt-in:** solo mueve ventanas con tag `autoplace` o título `juguete:*` al **abrir flotantes**.
+Solo reubica si se solapan con **otra flotante** (no pineada). Encima de tiled se quedan donde abrieron (p. ej. centradas).
 
-Ignora popups Jugoo, pinned y fullscreen.
+**Despeje al abrir tiled:** si una ventana anclada aparece y flotantes la tapan, esas flotantes se apartan (animación `windowsMove`). Intentan no solaparse entre sí; pueden quedar parcialmente fuera de pantalla (sigue siendo agarrable).
+
+Cómo se marca:
+
+1. **Binds de apps** (`binds.lua` → `launch()`): añaden `tag = "+autoplace"` al lanzar.
+2. **Windowrules** de tus floats “de verdad” (Dolphin principal, calc, editor, Noctalia settings, utils…): también `+autoplace`.
+3. **Juguetes floating**: tag + título `juguete:*`.
+
+**No** se marcan: modales genéricos, diálogos Steam/Audacity, popups Jugoo, etc.
+
+Si añades otra app flotante tuya, pon `tag = "+autoplace"` en su windowrule o lánzala con `launch(...)`.
 
 ---
 
@@ -51,11 +80,17 @@ Ignora popups Jugoo, pinned y fullscreen.
 | Curvas + tree | `~/.config/hypr/config/animations.lua` |
 | Flash al enfocar (plugin) | `~/.config/hypr/config/hyprfocus.lua` |
 
+Se carga con `hyprpm reload` en el arranque (el plugin tiene que estar `hyprpm enable hyprfocus`).  
+La config `plugin.hyprfocus.*` **solo se aplica si el plugin ya está cargado**; si no, Hyprland marca error de “unknown config key”.
+
 Notas:
 
+- Apertura de ventanas: `popin 55%` + spring `jelly` (crecen y rebotan un poco). Evitar bezier con Y>1 en popin: estira bordes y el contenido no acompaña.
+- Maximize / fullscreen (`SUPER+D` / `F`): `layout_aware=false` — crece encima de las hermanas (animación al instante); al salir el layout vuelve como estaba.
 - Cierre de flotantes: caída `gravity` + `slide bottom` (`windowsOut`).
-- Movimientos / recolocado de floats: `windowsMove` con `smoothIO`.
+- Movimientos / recolocado de floats: `windowsMove` con `smoothOut`.
 - **hyprfocus** (Vaxry): flash sutil al cambiar foco — no es animación de open/close.
+- Puertas Jugoo (`shell-app-launcher`, `shell-clipboard-picker`, `shell-emoji-picker`): `no_anim` en layer rule para no pelear con la animación puerta de GTK.
 
 ---
 

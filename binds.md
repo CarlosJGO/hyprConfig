@@ -17,9 +17,10 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 | `SUPER + SHIFT + C` | Screenshot de **región** (Flameshot GUI) |
 | `SUPER + SHIFT + X` | OCR de pantalla (`~/.local/bin/ocr-wayland.sh`) |
 | `SUPER + M` | Toggle salida de audio (auriculares ↔ parlantes) |
-| `SUPER + Home` | Toggle **juguetes** tiled |
-| `SUPER + SHIFT + Home` | Toggle **juguetes** floating |
+| `SUPER + Home` | Toggle **juguetes** tiled (reparte partiendo la ventana más grande; no sigue el mouse) |
+| `SUPER + SHIFT + Home` | Toggle **juguetes** en rejilla flotante fija |
 | `SUPER + Escape` | Modo kill de Hyprland (click para matar ventana) |
+| `SUPER + Delete` | **Apagar el PC** (`systemctl poweroff`, apagado limpio) |
 | `SUPER + SHIFT + SPACE` | Minimizar / scratchpad “minimizados” |
 | `SUPER + ALT + CONTROL + SPACE` | Toggle special workspace `minimizados` |
 | `SUPER + CONTROL + SHIFT + Up/Down` | Mueve **todo** el contenido del workspace al siguiente/anterior |
@@ -32,12 +33,12 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 |------|----------|
 | `SUPER + Q` | Cerrar ventana activa |
 | `SUPER + ALT + Space` | Toggle float |
-| `SUPER + D` | Maximize (fullscreen mode 1) |
-| `SUPER + F` | Fullscreen |
+| `SUPER + D` | Maximize (`layout_aware=false`: crece encima, al salir restaura el layout) |
+| `SUPER + F` | Fullscreen (igual) |
 | `SUPER + J` | Dwindle: togglesplit |
 | `SUPER + Left/Right/Up/Down` | Mover foco |
 | `ALT + Tab` | Ciclar ventanas |
-| `SUPER + Tab` | Window switcher (Noctalia) |
+| `SUPER + Tab` | Ciclar ventanas (Hyprland; Jugoo no tiene window-switcher) |
 | `SUPER + SHIFT + flechas` | Mover ventana en esa dirección |
 | `SUPER + SHIFT + 1/2/3` | Mover ventana al monitor 1/2/3 |
 | `SUPER + SHIFT + scroll` | Mover ventana a monitor ±1 |
@@ -60,15 +61,16 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 | `SUPER + K` | Cámara (Snapshot) |
 | `SUPER + O` | Obsidian |
 | `SUPER + W` | Navegador (Zen) |
-| `SUPER + Space` | Jugoo launcher |
+| `SUPER + Space` | Jugoo launcher (`jugoo action launcher`) |
 | `SUPER + .` (period) | Jugoo emoji picker |
 | `SUPER + V` | Jugoo clipboard |
-| `SUPER + Z` | Noctalia settings |
-| `SUPER + X` | Noctalia control center |
-| `SUPER + A` | Notificaciones (control center) |
-| `SUPER + L` | Bloquear sesión |
-| `SUPER + ALT + C` | Panel de sesión Noctalia |
-| `SUPER + SHIFT + W` | Panel de wallpapers Noctalia |
+| `SUPER + Z` | Jugoo settings (también desde Search) |
+| `SUPER + X` | Jugoo control center |
+| `SUPER + A` | Jugoo notificaciones |
+| `SUPER + L` | Bloquear sesión (`loginctl lock-session`) |
+| `SUPER + ALT + C` | Jugoo menú de sesión / power |
+| `SUPER + Delete` | Apagar el sistema (`systemctl poweroff`) |
+| `SUPER + SHIFT + W` | Wallpaper (`waywallen`; no es panel Jugoo) |
 
 ---
 
@@ -114,7 +116,7 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 
 ## Juguetes (resumen)
 
-- **Abrir/cerrar tiled:** `SUPER + Home`
-- **Abrir/cerrar floating:** `SUPER + SHIFT + Home`
-- Segunda pulsación (cualquier variante) cierra todos y limpia procesos huérfanos.
+- **Tiled:** `SUPER + Home` (parte siempre la más grande; no sigue el mouse)
+- **Floating grid:** `SUPER + SHIFT + Home`
+- Segunda pulsación cierra todos.
 - Lista editable: ver `curiosidades.md`.

@@ -79,6 +79,16 @@ hl.window_rule({
     focus_on_activate = true,
 })
 
+-- Puertas (launcher / clipboard / emoji): la animación puerta vive en GTK.
+-- Sin esto, Hyprland aplica layers→slide y parece que caen desde arriba.
+hl.layer_rule({
+    name = "jugoo-puertas-no-anim",
+    match = {
+        namespace = "^shell-(app-launcher|clipboard-picker|emoji-picker)$",
+    },
+    no_anim = true,
+})
+
 hl.window_rule({
     name = "SHELL-SETTINGS",
     match = {
@@ -155,14 +165,15 @@ hl.window_rule({
     workspace        = gamingWorkspace,
 })
 
--- Apps
--- Small floating utility windows
+-- Apps que tú lanzas y suelen flotar: tag para float_place.
+-- Diálogos de Steam/Audacity/etc. NO entran aquí.
 hl.window_rule({
     name = "gnome-text-editor-small",
     match = { class = "^org\\.gnome\\.TextEditor$" },
     float = true,
     persistent_size = true,
     size = { "365", "245" },
+    tag = "+autoplace",
 })
 
 hl.window_rule({
@@ -171,6 +182,7 @@ hl.window_rule({
     float = true,
     persistent_size = true,
     size = { "300", "301" },
+    tag = "+autoplace",
 })
 
 
@@ -193,22 +205,20 @@ hl.window_rule({
 hl.window_rule({ match = { class = "^(.*\\.exe)$", float = true }, monitor = PRIMARY_MONITOR, center = true, fullscreen_state = 0 })
 hl.window_rule({ match = { class = "^(.*[Ll]auncher.*)$" }, float = true, monitor = PRIMARY_MONITOR })
 hl.window_rule({ match = { class = "^(vesktop|discord)$" }, monitor = PRIMARY_MONITOR })
-hl.window_rule({ match = { class = "^(.*[Cc]alc.*)$" }, float = true, size = { "max(monitor_w, monitor_h)*0.17", "min(monitor_w, monitor_h)*0.43" } })
+hl.window_rule({ match = { class = "^(.*[Cc]alc.*)$" }, float = true, size = { "max(monitor_w, monitor_h)*0.17", "min(monitor_w, monitor_h)*0.43" }, tag = "+autoplace" })
 hl.window_rule({ match = { class = "^(org\\.kde\\.keditfiletype)$" }, float = true })
-hl.window_rule({ match = { class = "^(org\\.kde\\.ark)$" }, size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" } })
+hl.window_rule({ match = { class = "^(org\\.kde\\.ark)$" }, size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" }, tag = "+autoplace" })
 
-hl.window_rule({ match = { class = "^(dev\\.)?(noctalia\\.Noctalia(\\.Settings)?)$" }, float = true, size = { "monitor_w*0.70", "monitor_h*0.70" } })
+hl.window_rule({ match = { class = "^(dev\\.)?(noctalia\\.Noctalia(\\.Settings)?)$" }, float = true, size = { "monitor_w*0.70", "monitor_h*0.70" }, tag = "+autoplace" })
 hl.window_rule({
     match = {
         class = "^(org\\.kde\\.dolphin)$",
         title = "negative:^(Moving.*|Create New.*|Extract.*|Compress.*|Copying.*|Progress.*|Configure.*|Properties.*|Choose\\sApplication.*)$",
     },
     float = true,
+    center = true,
     size = { "max(monitor_w, monitor_h)*0.50", "min(monitor_w, monitor_h)*0.55" },
-    move = {
-        "max(20, min(cursor_x - (window_w*0.50), monitor_w - window_w + 20))", -- X axis clamping
-        "max(20, min(cursor_y - 50, monitor_h - window_h + 20))" -- Y axis clamping
-    },
+    tag = "+autoplace",
 })
 
 -- Opacity Overrides
@@ -218,15 +228,17 @@ hl.window_rule({ match = { class = "^(firefox|zen)$" }, opacity = "1.0 override"
 hl.window_rule({ match = { class = terminals }, opacity = "1.0 override" }) -- Override opacity in favor of terminal settings for opacity. If your terminal doesn't support transparency, you can remove this rule.
 hl.window_rule({ match = { class = "^(mpv|org.kde.haruna|.*plex.*|org\\.kde\\.gwenview|.*vlc.*)$" }, opacity = "1.0 override" })
 
--- Float Utility Windows
+-- Float Utility Windows (las que sueles abrir tú)
 local floatApps = {
     { class = "^(kvantummanager|qt[56]ct|nwg-look)$" },
     { class = "^(org.pulseaudio.pavucontrol|blueman-manager|nm-applet|nm-connection-editor)$" },
     { title = "^(Winetricks.*|Protontricks.*)$" },
 }
-for _, m in ipairs(floatApps) do hl.window_rule({ match = m, float = true }) end
+for _, m in ipairs(floatApps) do
+    hl.window_rule({ match = m, float = true, tag = "+autoplace" })
+end
 
--- Float Common Modals
+-- Float Common Modals (apps hijas: NO autoplace)
 local modalMatches = {
     { title = "^(Open|Authentication Required|Add Folder to Workspace|Choose Files|Save As|Confirm to replace files|File Operation Progress)$" },
     { initial_title = "^(Open File)$" },
