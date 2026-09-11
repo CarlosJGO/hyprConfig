@@ -198,7 +198,6 @@ hl.bind(
     { locked = true }
 )
 
-
 -- Brightness
 hl.bind(
     "XF86MonBrightnessUp",
