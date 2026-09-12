@@ -31,7 +31,7 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 
 | Bind | Qué hace |
 |------|----------|
-| `SUPER + Q` | Cerrar ventana activa |
+| `SUPER + Q` | Desintegrar y cerrar (no bloquea foco; se pueden cerrar varias a la vez) |
 | `SUPER + ALT + Space` | Toggle float |
 | `SUPER + D` | Maximize (`layout_aware=false`: crece encima, al salir restaura el layout) |
 | `SUPER + F` | Fullscreen (igual) |
@@ -47,6 +47,15 @@ Gestos: `~/.config/hypr/config/inputs.lua`
 | `SUPER + CONTROL + SHIFT + 1..N` | Mover a workspace relativo del monitor (`m~N`) |
 | `SUPER + click izq` | Arrastrar ventana |
 | `SUPER + click der` | Redimensionar ventana |
+
+El gesto de tres dedos hacia abajo usa el mismo launcher de desintegración que
+`SUPER + Q`. `SUPER + Escape` conserva su comportamiento de kill interactivo.
+Flujo no bloqueante: captura → overlay click-through (Quickshell) → `close` con
+`noanim`. Jugoo (layers GtkLayerShell) usa el mismo efecto vía
+`shell/ui/disintegrate_hide.py` al cerrar pickers/settings/etc. (puertas siguen
+con animación puerta). Kill / muerte de proceso usa `windowsOut` popin 65%.
+Layers usan fade. Overlay disintegrate con `no_anim`.
+Scripts viejos: `Deprecados/`.
 
 ---
 

@@ -89,6 +89,15 @@ hl.layer_rule({
     no_anim = true,
 })
 
+-- Overlay de desintegración: sin anim de layer (si hubiera slide, “subiría” la captura).
+hl.layer_rule({
+    name = "hypr-disintegrate-passthrough",
+    match = {
+        namespace = "^hypr-window-disintegrate",
+    },
+    no_anim = true,
+})
+
 hl.window_rule({
     name = "SHELL-SETTINGS",
     match = {

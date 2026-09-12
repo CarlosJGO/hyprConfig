@@ -1,4 +1,5 @@
 local mainMod = "SUPER"
+local disintegrateClose = "python3 \"$HOME/.config/hypr/scripts/close_disintegrate.py\""
 
 -- External commands
 local launchPrefix = "uwsm app -- "
@@ -25,7 +26,7 @@ end
 
 -- Window manipulation
 hl.bind(mainMod .. " + Escape",      hl.dsp.exec_cmd("hyprctl kill"))
-hl.bind(mainMod .. " + Q",           hl.dsp.window.close())
+hl.bind(mainMod .. " + Q",           hl.dsp.exec_cmd(disintegrateClose))
 hl.bind(mainMod .. " + ALT + Space", hl.dsp.window.float({ action = "toggle" }))
 
 -- Maximize / fullscreen: layout_aware=false (hermanas debajo, restore limpio).

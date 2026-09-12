@@ -138,14 +138,6 @@ hl.curve("snappy", {
     }
 })
 
-hl.curve("gravity", {
-    type = "bezier",
-    points = {
-        {0.55, 0},
-        {1, 1},
-    },
-})
-
 -- ============================================================
 -- SPRINGS
 -- ============================================================
@@ -222,13 +214,14 @@ hl.animation({
     style = "popin 55%",
 })
 
--- Salida: caída hacia abajo
+-- Salida nativa (kill / muerte de proceso): POP rápido.
+-- SUPER+Q pone noanim antes del close, así que no pelea con la desintegración.
 hl.animation({
     leaf = "windowsOut",
     enabled = true,
-    speed = 5,
-    bezier = "gravity",
-    style = "slide bottom",
+    speed = 2.4,
+    bezier = "snappy",
+    style = "popin 65%",
 })
 
 
@@ -270,12 +263,13 @@ hl.animation({
 -- LAYERS
 -- ============================================================
 
+-- Layers: fade (no slide). El slide hacía que overlays parecieran “subir/caer”.
 hl.animation({
     leaf = "layers",
     enabled = true,
     speed = 3,
     bezier = "smoothOut",
-    style = "slide",
+    style = "fade",
 })
 
 
@@ -293,8 +287,8 @@ hl.animation({
 hl.animation({
     leaf = "fadeOut",
     enabled = true,
-    speed = 5,
-    bezier = "gravity",
+    speed = 4,
+    bezier = "smoothOut",
 })
 
 hl.animation({
