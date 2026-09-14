@@ -21,11 +21,8 @@ from gi.repository import Gtk, Gdk, GtkLayerShell, GLib
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-# Desired *visible* colors per special workspace.
-COLORS = {
-    "special:minimizados": "#06211c",
-    "special:special": "#0a1730",
-}
+# No solid surfaces: special workspaces show the wallpaper through the light blur.
+COLORS = {}
 NAMESPACE = "hypr-special-bg"
 
 # surfaces[monitor_name][special_name] = Gtk.Window

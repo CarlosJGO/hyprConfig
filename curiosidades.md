@@ -64,7 +64,7 @@ Solo reubica si se solapan con **otra flotante** (no pineada). Encima de tiled s
 Cómo se marca:
 
 1. **Binds de apps** (`binds.lua` → `launch()`): añaden `tag = "+autoplace"` al lanzar.
-2. **Windowrules** de tus floats “de verdad” (Dolphin principal, calc, editor, Noctalia settings, utils…): también `+autoplace`.
+2. **Windowrules** de tus floats “de verdad” (Dolphin principal, calc, editor, utils…): también `+autoplace`.
 3. **Juguetes floating**: tag + título `juguete:*`.
 
 **No** se marcan: modales genéricos, diálogos Steam/Audacity, popups Jugoo, etc.
@@ -85,7 +85,7 @@ La config `plugin.hyprfocus.*` **solo se aplica si el plugin ya está cargado**;
 
 Notas:
 
-- Apertura de ventanas: `popin 55%` + spring `jelly` (crecen y rebotan un poco). Evitar bezier con Y>1 en popin: estira bordes y el contenido no acompaña.
+- Apertura de ventanas: efecto aleatorio de `WINDOW_IN_EFFECTS` en `animations.lua` (`window.open_early`). Hoy: **gelatina** (`popin 55%` + spring `jelly`) o **líquido** (`gnomed` + spring `liquid`, llena en vertical). Para añadir otro, una fila más en esa tabla. Evitar bezier con Y>1 en popin: estira bordes y el contenido no acompaña.
 - Maximize / fullscreen (`SUPER+D` / `F`): `layout_aware=false` — crece encima de las hermanas (animación al instante); al salir el layout vuelve como estaba.
 - Cierre nativo / kill / muerte de proceso: `windowsOut` → `popin 65%` + `snappy` (POP).
 - `SUPER+Q` (desintegración): pone `noanim` + alpha 0 **después** de que el overlay ya cubre la captura, para no disparar el POP ni pelear con el efecto.
@@ -205,7 +205,7 @@ Knobs útiles (env):
 | `config/decorations.lua` | Gaps, bordes, blur, opacidades |
 | `config/hyprfocus.lua` | Plugin flashfocus |
 | `config/inputs.lua` | Teclado, gestos |
-| `noctalia.lua` / `jugoo_theme_generated.lua` | Temas (Jugoo al final del load) |
+| `config/jugoo_theme_generated.lua` | Tema exportado por Jugoo (al final del load) |
 
 ---
 
@@ -215,10 +215,12 @@ Knobs útiles (env):
 |-----|------------|
 | `hyprpicker` | `SUPER + P` |
 | `flameshot` | `SUPER + SHIFT + C/P` |
-| `jugoo` | launcher, emoji, clipboard |
+| `jugoo` | launcher, emoji, clipboard, settings, session |
 | `qs` / Quickshell | overlay de efectos (desintegración) |
 | `grim` | captura de región para efectos |
-| `noctalia msg` | volumen, brillo, paneles, lock |
+| `wpctl` / `brightnessctl` / `playerctl` | volumen, brillo, media |
+| `loginctl` / `systemctl` | lock / power |
+| `waywallen` | wallpaper |
 | `~/.local/bin/audio-toggle` | `SUPER + M` |
 | `~/.local/bin/ocr-wayland.sh` | `SUPER + SHIFT + X` |
 

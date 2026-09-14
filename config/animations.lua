@@ -130,6 +130,14 @@ hl.curve("jelly", {
     dampening = 16,
 })
 
+-- Líquido: más viscoso que jelly (ζ≈0.82). Se usa con gnomed: llena en vertical.
+hl.curve("liquid", {
+    type = "spring",
+    mass = 1,
+    stiffness = 180,
+    dampening = 22,
+})
+
 hl.curve("snappy", {
     type = "bezier",
     points = {
@@ -206,13 +214,48 @@ hl.animation({
     style = "slide",
 })
 
-hl.animation({
-    leaf = "windowsIn",
-    enabled = true,
-    speed = 5,
-    spring = "jelly",
-    style = "popin 55%",
-})
+-- Catálogo de entradas. Añade una fila (y su curva si hace falta) para un efecto nuevo.
+-- Hyprland solo tiene un windowsIn global: se aplica en window.open_early, antes del map.
+-- No se setea animation en la ventana: eso también cambiaría windowsOut (el POP de cierre).
+local WINDOW_IN_EFFECTS = {
+    {
+        name = "gelatina",
+        speed = 5,
+        spring = "jelly",
+        style = "popin 55%",
+    },
+    {
+        name = "liquido",
+        speed = 6,
+        spring = "liquid",
+        style = "gnomed",
+    },
+}
+
+local function apply_window_in_effect(effect)
+    local spec = {
+        leaf = "windowsIn",
+        enabled = true,
+        speed = effect.speed,
+        style = effect.style,
+    }
+    if effect.spring then
+        spec.spring = effect.spring
+    elseif effect.bezier then
+        spec.bezier = effect.bezier
+    end
+    hl.animation(spec)
+end
+
+math.randomseed(os.time())
+apply_window_in_effect(WINDOW_IN_EFFECTS[math.random(#WINDOW_IN_EFFECTS)])
+
+hl.on("window.open_early", function(window)
+    if not window then
+        return
+    end
+    apply_window_in_effect(WINDOW_IN_EFFECTS[math.random(#WINDOW_IN_EFFECTS)])
+end)
 
 -- Salida nativa (kill / muerte de proceso): POP rápido.
 -- SUPER+Q pone noanim antes del close, así que no pelea con la desintegración.

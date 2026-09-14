@@ -106,9 +106,10 @@ Scripts viejos: `Deprecados/`.
 
 | Bind | Qué hace |
 |------|----------|
-| Teclas de volumen / mute / mic | Noctalia volume |
-| Play / Pause / Next / Prev | Noctalia media |
-| Brillo ± | Noctalia brightness |
+| Teclas de volumen / mute / mic | `wpctl` (sink/source por defecto) |
+| `SUPER + F9 / F10 / F11` | Media: `playerctl` prev / Jugoo play-stop / `playerctl` next |
+| `SUPER + SHIFT + F10` | Jugoo: toggle popup del reproductor (`jugoo action media`) |
+| Brillo ± | `brightnessctl` |
 
 ---
 

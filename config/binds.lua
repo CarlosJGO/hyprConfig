@@ -68,32 +68,86 @@ hl.bind(mainMod .. " + SHIFT + 3", hl.dsp.window.move({ monitor = MONITOR3 }))
 hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.window.move({ monitor = "-1" }))
 hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.window.move({ monitor = "+1" }))
 
-hl.bind(
-    mainMod .. " + CONTROL + SHIFT + Right",
-    hl.dsp.window.move({ workspace = "m+1" })
-)
+-- Carry window to another WS with the same horizontal slide as focus-only switches.
+-- Native movetoworkspace relocates the window before the workspace anim, so it teleports.
+-- Float+pin keeps it fixed on screen while workspaces slide; then we silent-move + restore.
+local moveWsSlideMs = 450 -- workspaces speed 4 (=400ms) + margin
+local moveWsSlideBusy = false
 
-hl.bind(
-    mainMod .. " + CONTROL + SHIFT + Left",
-    hl.dsp.window.move({ workspace = "m-1" })
-)
+local function move_window_follow_slide(workspace)
+    if moveWsSlideBusy then
+        return
+    end
 
-hl.bind(
-    mainMod .. " + CONTROL + SHIFT + mouse_up",
-    hl.dsp.window.move({ workspace = "m-1" })
-)
+    local win = hl.get_active_window()
+    if not win then
+        return
+    end
 
-hl.bind(
-    mainMod .. " + CONTROL + SHIFT + mouse_down",
-    hl.dsp.window.move({ workspace = "m+1" })
-)
+    local addr = "address:" .. win.address
+    local was_floating = win.floating
+    local was_pinned = win.pinned
+
+    if win.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.move({ workspace = workspace, follow = true, window = addr }))
+        return
+    end
+
+    moveWsSlideBusy = true
+
+    if not was_floating then
+        hl.dispatch(hl.dsp.window.float({ action = "set", window = addr }))
+    end
+    if not was_pinned then
+        hl.dispatch(hl.dsp.window.pin({ action = "set", window = addr }))
+    end
+
+    hl.dispatch(hl.dsp.focus({ workspace = workspace }))
+
+    hl.timer(function()
+        local cur = hl.get_active_workspace()
+        if cur then
+            hl.dispatch(hl.dsp.window.move({
+                window = addr,
+                workspace = cur.id,
+                follow = false,
+            }))
+        end
+
+        if not was_pinned then
+            hl.dispatch(hl.dsp.window.pin({ action = "unset", window = addr }))
+        end
+        if not was_floating then
+            hl.dispatch(hl.dsp.window.float({ action = "unset", window = addr }))
+        end
+
+        hl.dispatch(hl.dsp.focus({ window = addr }))
+        moveWsSlideBusy = false
+    end, { timeout = moveWsSlideMs, type = "oneshot" })
+end
+
+hl.bind(mainMod .. " + CONTROL + SHIFT + Right", function()
+    move_window_follow_slide("m+1")
+end)
+
+hl.bind(mainMod .. " + CONTROL + SHIFT + Left", function()
+    move_window_follow_slide("m-1")
+end)
+
+hl.bind(mainMod .. " + CONTROL + SHIFT + mouse_up", function()
+    move_window_follow_slide("m-1")
+end)
+
+hl.bind(mainMod .. " + CONTROL + SHIFT + mouse_down", function()
+    move_window_follow_slide("m+1")
+end)
 
 for i = 1, NUM_WPM do
     local key = i % 10
-    hl.bind(
-        mainMod .. " + SHIFT + CONTROL + " .. key,
-        hl.dsp.window.move({ workspace = "m~" .. i })
-    )
+    local ws = "m~" .. i
+    hl.bind(mainMod .. " + SHIFT + CONTROL + " .. key, function()
+        move_window_follow_slide(ws)
+    end)
 end
 
 
@@ -107,6 +161,28 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize())
 ------------------
 
 hl.bind(mainMod .. " + Return", launch(launchPrefix .. TERMINAL))
+
+-- Double-tap Super → terminal. Needs "SUPER + SUPER_L/R" (not bare SUPER_L):
+-- on release the SUPER modmask is still set, so modmask:0 never matches.
+local doubleSuperTimeoutMs = 400
+local doubleSuperPending = false
+
+local function onSuperRelease()
+    if doubleSuperPending then
+        doubleSuperPending = false
+        hl.dispatch(launch(launchPrefix .. TERMINAL))
+        return
+    end
+
+    doubleSuperPending = true
+    hl.timer(function()
+        doubleSuperPending = false
+    end, { timeout = doubleSuperTimeoutMs, type = "oneshot" })
+end
+
+hl.bind(mainMod .. " + SUPER_L", onSuperRelease, { release = true, non_consuming = true })
+hl.bind(mainMod .. " + SUPER_R", onSuperRelease, { release = true, non_consuming = true })
+
 hl.bind(mainMod .. " + E",      launch(launchPrefix .. FILE_MANAGER))
 hl.bind(mainMod .. " + T",      launch(launchPrefix .. EDITOR))
 hl.bind(mainMod .. " + C",      launch(launchPrefix .. CALCULATOR))
@@ -190,6 +266,12 @@ hl.bind(
 hl.bind(
     mainMod .. " + F10",
     jugoo_cmd("action playStopMusic"),
+    { locked = true }
+)
+
+hl.bind(
+    mainMod .. " + SHIFT + F10",
+    jugoo_cmd("action media"),
     { locked = true }
 )
 

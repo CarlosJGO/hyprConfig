@@ -218,7 +218,6 @@ hl.window_rule({ match = { class = "^(.*[Cc]alc.*)$" }, float = true, size = { "
 hl.window_rule({ match = { class = "^(org\\.kde\\.keditfiletype)$" }, float = true })
 hl.window_rule({ match = { class = "^(org\\.kde\\.ark)$" }, size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" }, tag = "+autoplace" })
 
-hl.window_rule({ match = { class = "^(dev\\.)?(noctalia\\.Noctalia(\\.Settings)?)$" }, float = true, size = { "monitor_w*0.70", "monitor_h*0.70" }, tag = "+autoplace" })
 hl.window_rule({
     match = {
         class = "^(org\\.kde\\.dolphin)$",
@@ -234,7 +233,11 @@ hl.window_rule({
 local terminals = "^(kitty|ghostty|[Kk]onsole|Alacritty|gnome-terminal|xfce[0-9]?-terminal)$"
 
 hl.window_rule({ match = { class = "^(firefox|zen)$" }, opacity = "1.0 override" })
-hl.window_rule({ match = { class = terminals }, opacity = "1.0 override" }) -- Override opacity in favor of terminal settings for opacity. If your terminal doesn't support transparency, you can remove this rule.
+-- Terminals: leave opacity at 1.0 so Kitty/Ghostty control transparency themselves
+-- (see ~/.config/kitty/kitty.conf background_opacity + adapt_contrast.py).
+-- Disable Hyprland blur behind them — theme blur (size 8 / 4 passes) is too heavy
+-- over wallpaper; Kitty opacity alone is enough for a clear see-through look.
+hl.window_rule({ match = { class = terminals }, opacity = "1.0 override", no_blur = true })
 hl.window_rule({ match = { class = "^(mpv|org.kde.haruna|.*plex.*|org\\.kde\\.gwenview|.*vlc.*)$" }, opacity = "1.0 override" })
 
 -- Float Utility Windows (las que sueles abrir tú)

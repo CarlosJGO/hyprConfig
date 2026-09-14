@@ -18,9 +18,18 @@ require("config.jugoo_popup_place")
 require("config.float_place")
 require("config.workspaces")
 
--- For Noctalia Color templates
-require("noctalia").apply_theme()
-
 -- Generated from Jugoo's active semantic theme; keep this last.
 require("config.jugoo_theme_generated").apply()
+
+-- Keep special workspaces transparent with the lightest supported blur.
+hl.config({
+	decoration = {
+		blur = {
+			enabled = true,
+			size = 1,
+			passes = 1,
+			special = true,
+		},
+	},
+})
 

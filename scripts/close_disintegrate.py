@@ -3,8 +3,11 @@
 """Disintegrate a Hyprland window or an arbitrary screen region (Jugoo layers).
 
 Modes:
-  (default)           Capture active/target window → overlay → close
-  --overlay-only -g   Capture geometry → overlay only (caller hides the UI)
+  (default)           Capture active/target window → overlay → close (async)
+  --overlay-only -g   Capture geometry → overlay only (NEVER closes any window)
+
+Critical: --overlay-only must never call activewindow/close. Jugoo popups use it
+when dismissing; a regression here closes whatever has Hyprland focus.
 """
 
 import argparse
@@ -127,8 +130,50 @@ def wait_until_ready(ready_path, timeout_s=READY_TIMEOUT_S):
             except FileNotFoundError:
                 pass
             return True
-        time.sleep(0.008)
+        time.sleep(0.006)
     return False
+
+
+def address_lock_path(address):
+    safe = address.replace("/", "_").replace(":", "_")
+    return f"/tmp/hypr-disintegrate-inflight-{safe}.lock"
+
+
+def try_claim_address(address):
+    """Exclusive in-flight lock so double-Q on the same window is ignored."""
+    path = address_lock_path(address)
+    try:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        os.write(fd, str(os.getpid()).encode())
+        return fd, path
+    except FileExistsError:
+        # Stale lock if owner died.
+        try:
+            with open(path, encoding="ascii") as lock_file:
+                owner = int(lock_file.read().strip() or "0")
+            os.kill(owner, 0)
+        except (ProcessLookupError, ValueError, FileNotFoundError):
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+            return try_claim_address(address)
+        except PermissionError:
+            return None, path
+        return None, path
+
+
+def release_address(lock_fd, path):
+    if lock_fd is not None:
+        try:
+            os.close(lock_fd)
+        except OSError:
+            pass
+    if path:
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            pass
 
 
 def show_overlay(geometry, image_path, monitor=None, ready_path=None):
@@ -167,7 +212,7 @@ def show_overlay(geometry, image_path, monitor=None, ready_path=None):
 
 
 def run_overlay_only(geometry_spec):
-    """Capture → wait for plate → return (caller may hide UI without a gap)."""
+    """Capture → wait for plate → return. Does NOT close/kill any Hyprland window."""
     geometry = parse_geometry(geometry_spec)
     width, height = geometry["size"]
     if width < 2 or height < 2:
@@ -183,6 +228,7 @@ def run_overlay_only(geometry_spec):
         capture_geometry(geometry, image_path)
         show_overlay(geometry, image_path, ready_path=ready_path)
         wait_until_ready(ready_path)
+        # Overlay owns image cleanup. Never call close_natively here.
     except Exception:
         try:
             os.unlink(image_path)
@@ -195,22 +241,53 @@ def run_overlay_only(geometry_spec):
         raise
 
 
+def _finish_close_after_ready(address, ready_path, lock_fd, lock_path):
+    """Child: wait for plate, then close the SNAPSHOTTED address only."""
+    try:
+        wait_until_ready(ready_path)
+        prepare_silent_close(address)
+        close_natively(address)
+    except Exception as error:
+        print(f"close_disintegrate finish: {error}", file=sys.stderr)
+        try:
+            close_silently(address)
+        except Exception as fallback_error:
+            print(f"close_disintegrate fallback: {fallback_error}", file=sys.stderr)
+    finally:
+        if ready_path:
+            try:
+                os.unlink(ready_path)
+            except FileNotFoundError:
+                pass
+        release_address(lock_fd, lock_path)
+
+
 def run_window_close():
     window = target_window()
+    # Freeze target now — never re-query activewindow after this.
     address = window.get("address")
+    if not address or window.get("pinned"):
+        close_natively(address)
+        return
+
+    lock_fd, lock_path = try_claim_address(address)
+    if lock_fd is None:
+        # This window is already disintegrating; ignore duplicate Q.
+        return
+
     image_path = None
     ready_path = None
     try:
-        if not address or window.get("pinned"):
-            close_natively(address)
-            return
-
         with tempfile.NamedTemporaryFile(
             prefix="hypr-disintegrate-", suffix=".png", delete=False
         ) as image:
             image_path = image.name
 
-        geometry = {"at": window["at"], "size": window["size"], "monitor": window.get("monitor", 0)}
+        geometry = {
+            "at": window["at"],
+            "size": window["size"],
+            "monitor": window.get("monitor", 0),
+        }
         monitors = json.loads(run(["hyprctl", "monitors", "-j"]))
         monitor_id = window.get("monitor", 0)
         monitor = next(
@@ -218,34 +295,39 @@ def run_window_close():
             monitors[monitor_id] if monitor_id < len(monitors) else monitors[0],
         )
 
-        # 1) Snapshot while the live window is still fully visible.
         capture_geometry(geometry, image_path)
         ready_path = make_ready_path()
-        # 2) Bring the overlay plate up ON TOP of the still-visible window.
         show_overlay(geometry, image_path, monitor=monitor, ready_path=ready_path)
-        wait_until_ready(ready_path)
-        # 3) Only now hide/close — the plate already covers the same pixels.
-        prepare_silent_close(address)
-        close_natively(address)
+
+        # Return the bind immediately: finish close in a child process so the
+        # next SUPER+Q can target another window without waiting.
+        pid = os.fork()
+        if pid == 0:
+            _finish_close_after_ready(address, ready_path, lock_fd, lock_path)
+            os._exit(0)
+
+        # Parent: overlay owns the PNG; child owns the lock/ready cleanup.
         image_path = None
+        ready_path = None
+        lock_fd = None
+        lock_path = None
     except Exception as error:
         print(f"close_disintegrate: {error}", file=sys.stderr)
-        if address:
-            try:
-                close_silently(address)
-            except Exception as fallback_error:
-                print(f"close_disintegrate fallback: {fallback_error}", file=sys.stderr)
+        try:
+            close_silently(address)
+        except Exception as fallback_error:
+            print(f"close_disintegrate fallback: {fallback_error}", file=sys.stderr)
         if image_path:
             try:
                 os.unlink(image_path)
             except FileNotFoundError:
                 pass
-    finally:
         if ready_path:
             try:
                 os.unlink(ready_path)
             except FileNotFoundError:
                 pass
+        release_address(lock_fd, lock_path)
 
 
 def main():
@@ -264,7 +346,10 @@ def main():
 
     if args.overlay_only:
         if not args.geometry:
-            print("close_disintegrate: --geometry required with --overlay-only", file=sys.stderr)
+            print(
+                "close_disintegrate: --geometry required with --overlay-only",
+                file=sys.stderr,
+            )
             sys.exit(2)
         try:
             run_overlay_only(args.geometry)
