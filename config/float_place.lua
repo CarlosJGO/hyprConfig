@@ -11,6 +11,7 @@
 
 local AUTOPLACE_TAG = "autoplace"
 local JUGUETE_PREFIX = "juguete:"
+local FIXED_CAMERA_CLASS = "org.gnome.Snapshot"
 
 local MARGIN = 16
 local GAP = 10
@@ -50,6 +51,9 @@ end
 
 local function should_skip_float_place(window)
     if not window or not window.floating or not window.mapped then
+        return true
+    end
+    if window.class == FIXED_CAMERA_CLASS then
         return true
     end
     if window.pinned or window.fullscreen ~= 0 then

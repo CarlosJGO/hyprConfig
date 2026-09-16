@@ -1,5 +1,17 @@
 -- Window rules wiki https://wiki.hypr.land/Configuring/Basics/Window-Rules/
 
+hl.window_rule({
+    name = "wobbly-windows",
+    match = { class = "negative:^com\\.jugoo\\.Shell$" },
+    tag = "+shader_move:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
+})
+
+hl.window_rule({
+    name = "wobbly-windows-resize",
+    match = { class = "negative:^com\\.jugoo\\.Shell$" },
+    tag = "+shader_resize:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
+})
+
 -- Jugoo popups: positioned by the shell, not Hyprland.
 hl.window_rule({
     name = "shell-popups",
@@ -183,6 +195,28 @@ hl.window_rule({
     persistent_size = true,
     size = { "365", "245" },
     tag = "+autoplace",
+})
+
+hl.window_rule({
+    name = "gnome-snapshot-camera",
+    match = { class = "^org\\.gnome\\.Snapshot$" },
+    float = true,
+    persistent_size = true,
+    size = { "1110", "625" },
+    center = true,
+    tag = "+autoplace",
+})
+
+hl.window_rule({
+    name = "gnome-snapshot-camera-wobble-move",
+    match = { class = "^org\\.gnome\\.Snapshot$" },
+    tag = "+shader_move:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
+})
+
+hl.window_rule({
+    name = "gnome-snapshot-camera-wobble-resize",
+    match = { class = "^org\\.gnome\\.Snapshot$" },
+    tag = "+shader_resize:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
 })
 
 hl.window_rule({

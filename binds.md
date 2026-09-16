@@ -63,7 +63,7 @@ Scripts viejos: `Deprecados/`.
 
 | Bind | Qué hace |
 |------|----------|
-| `SUPER + Return` | Terminal (kitty vía uwsm) |
+| `SUPER + Return` | Jugoo: preguntar a la IA (`jugoo action ask`) |
 | `SUPER + E` | File manager (Dolphin) |
 | `SUPER + T` | Editor de texto |
 | `SUPER + C` | Calculadora |
@@ -73,6 +73,7 @@ Scripts viejos: `Deprecados/`.
 | `SUPER + Space` | Jugoo launcher (`jugoo action launcher`) |
 | `SUPER + .` (period) | Jugoo emoji picker |
 | `SUPER + V` | Jugoo clipboard |
+| Double-tap Super | Terminal (kitty vía uwsm) |
 | `SUPER + Z` | Jugoo settings (también desde Search) |
 | `SUPER + X` | Jugoo control center |
 | `SUPER + A` | Jugoo notificaciones |
@@ -108,6 +109,7 @@ Scripts viejos: `Deprecados/`.
 |------|----------|
 | Teclas de volumen / mute / mic | `wpctl` (sink/source por defecto) |
 | `SUPER + F9 / F10 / F11` | Media: `playerctl` prev / Jugoo play-stop / `playerctl` next |
+| `SUPER + SHIFT + F9 / F11` | Jugoo: bajar / subir volumen de Strawberry |
 | `SUPER + SHIFT + F10` | Jugoo: toggle popup del reproductor (`jugoo action media`) |
 | Brillo ± | `brightnessctl` |
 

@@ -160,7 +160,7 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize())
 ---- LAUNCHER ----
 ------------------
 
-hl.bind(mainMod .. " + Return", launch(launchPrefix .. TERMINAL))
+hl.bind(mainMod .. " + Return", jugoo_cmd("action ask"))
 
 -- Double-tap Super → terminal. Needs "SUPER + SUPER_L/R" (not bare SUPER_L):
 -- on release the SUPER modmask is still set, so modmask:0 never matches.
@@ -279,6 +279,18 @@ hl.bind(
     mainMod .. " + F11",
     hl.dsp.exec_cmd("playerctl next"),
     { locked = true }
+)
+
+hl.bind(
+    mainMod .. " + SHIFT + F9",
+    jugoo_cmd("action musicVolumeDown"),
+    { locked = true, repeating = true }
+)
+
+hl.bind(
+    mainMod .. " + SHIFT + F11",
+    jugoo_cmd("action musicVolumeUp"),
+    { locked = true, repeating = true }
 )
 
 -- Brightness

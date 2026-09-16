@@ -230,6 +230,12 @@ local WINDOW_IN_EFFECTS = {
         spring = "liquid",
         style = "gnomed",
     },
+    {
+        name = "rebota",
+        speed = 5,
+        spring = "bouncy",
+        style = "popin 60%",
+    },
 }
 
 local function apply_window_in_effect(effect)
