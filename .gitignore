@@ -1,0 +1,33 @@
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backup / temp files
+*.save
+*.bak
+*.orig
+*.tmp
+*.log
+
+# Hyprland local runtime state
+minimizados-state.json
+
+# Generated / compiled artifacts
+*.qsb
+*.pyc
+*.pyo
+__pycache__/
+
+# Generated theme files
+config/jugoo_theme_generated.lua
+
+# Common local caches
+.cache/
+.tmp/
+tmp/
+state/
