@@ -210,13 +210,13 @@ hl.window_rule({
 hl.window_rule({
     name = "gnome-snapshot-camera-wobble-move",
     match = { class = "^org\\.gnome\\.Snapshot$" },
-    tag = "+shader_move:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
+    tag = "+shader_move:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@2.0",
 })
 
 hl.window_rule({
     name = "gnome-snapshot-camera-wobble-resize",
     match = { class = "^org\\.gnome\\.Snapshot$" },
-    tag = "+shader_resize:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@0.6",
+    tag = "+shader_resize:/home/carlosjgo/.config/hypr/shaders/wobble.glsl@2.0",
 })
 
 hl.window_rule({
@@ -267,11 +267,9 @@ hl.window_rule({
 local terminals = "^(kitty|ghostty|[Kk]onsole|Alacritty|gnome-terminal|xfce[0-9]?-terminal)$"
 
 hl.window_rule({ match = { class = "^(firefox|zen)$" }, opacity = "1.0 override" })
--- Terminals: leave opacity at 1.0 so Kitty/Ghostty control transparency themselves
--- (see ~/.config/kitty/kitty.conf background_opacity + adapt_contrast.py).
--- Disable Hyprland blur behind them — theme blur (size 8 / 4 passes) is too heavy
--- over wallpaper; Kitty opacity alone is enough for a clear see-through look.
-hl.window_rule({ match = { class = terminals }, opacity = "1.0 override", no_blur = true })
+-- Terminals: keep Kitty/Ghostty transparency, but let Hyprland apply a very light blur
+-- behind them so the wallpaper is softened and the text remains readable.
+hl.window_rule({ match = { class = terminals }, opacity = "1.0 override" })
 hl.window_rule({ match = { class = "^(mpv|org.kde.haruna|.*plex.*|org\\.kde\\.gwenview|.*vlc.*)$" }, opacity = "1.0 override" })
 
 -- Float Utility Windows (las que sueles abrir tú)

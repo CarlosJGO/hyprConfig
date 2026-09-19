@@ -314,8 +314,71 @@ local function move_window(sel, x, y)
     }))
 end
 
+local function window_rect(window)
+    if not window then
+        return 0, 0, 0, 0
+    end
+    local x, y = vec2(window.at, 1, 2)
+    local w, h = vec2(window.size, 1, 2)
+    return x, y, w, h
+end
+
+local function center_window_on_anchor(window, anchor)
+    if not window or not anchor then
+        return
+    end
+
+    local wx, wy, ww, wh = window_rect(window)
+    local ax, ay, aw, ah = window_rect(anchor)
+    if ww <= 1 or wh <= 1 or aw <= 1 or ah <= 1 then
+        return
+    end
+
+    local cx = ax + math.floor((aw - ww) / 2)
+    local cy = ay + math.floor((ah - wh) / 2)
+    move_window("address:" .. window.address, cx, cy)
+end
+
+local function find_same_process_anchor(window)
+    if not window or not window.pid or tonumber(window.pid) == 0 then
+        return nil
+    end
+
+    local pid = tonumber(window.pid)
+    for _, other in ipairs(hl.get_windows() or {}) do
+        if other
+            and other.address ~= window.address
+            and other.pid
+            and tonumber(other.pid) == pid
+            and other.mapped
+            and not other.hidden
+            and other.workspace
+            and window.workspace
+            and other.workspace.id == window.workspace.id
+        then
+            return other
+        end
+    end
+    return nil
+end
+
 local function place_floating(window)
     if should_skip_float_place(window) then
+        return
+    end
+
+    local anchor = find_same_process_anchor(window)
+    if anchor then
+        hl.timer(function()
+            local live = hl.get_window("address:" .. window.address)
+            if should_skip_float_place(live) then
+                return
+            end
+            local anchor_live = hl.get_window("address:" .. anchor.address)
+            if anchor_live then
+                center_window_on_anchor(live, anchor_live)
+            end
+        end, { timeout = PLACE_DELAY_MS, type = "oneshot" })
         return
     end
 

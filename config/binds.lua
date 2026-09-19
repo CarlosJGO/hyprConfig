@@ -201,8 +201,7 @@ hl.bind(mainMod .. " + A",      jugoo_cmd("action notifications"))
 hl.bind(mainMod .. " + ALT + C", jugoo_cmd("action session"))
 
 -- Session lock
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
-
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("/home/carlosjgo/.local/bin/hyprlock-random-bg"))
 -- Poweroff
 hl.bind(mainMod .. " + Delete", hl.dsp.exec_cmd("systemctl poweroff"))
 
