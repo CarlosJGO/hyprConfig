@@ -278,15 +278,6 @@ hl.animation({
 -- WORKSPACES
 -- ============================================================
 
--- Circular strip: relative switches (m±1 / e±1 / gestures) already wrap at the
--- edges. Without this, last→first animates as a numeric jump backward.
--- shouldWraparound XOR's slide direction when old/new are global min/max IDs.
-hl.config({
-    animations = {
-        workspace_wraparound = true,
-    },
-})
-
 hl.animation({
     leaf = "workspaces",
     enabled = true,

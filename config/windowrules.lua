@@ -146,8 +146,13 @@ hl.window_rule({
 })
 
 -- Gaming
+-- Allowlist: content=game, steam_app*/gamescope, Steam "Launching..." splash.
+-- Everything else that opens on or is moved into name:gaming is ejected.
 local gamingApps = "^(steam_app.*|gamescope)$"
 local gamingWorkspace = "name:gaming"
+local gamingWsName = "gaming"
+local gamingEjectDelayMs = 250
+local gamingEjectInFlight = {}
 
 hl.window_rule({ match = { content = "game" }, workspace = gamingWorkspace })
 hl.window_rule({ match = { xdg_tag = "^(.*game.*)$" }, workspace = gamingWorkspace, fullscreen_state = 2, content = "game", sync_fullscreen = true })
@@ -185,6 +190,105 @@ hl.window_rule({
     fullscreen_state = 0,
     workspace        = gamingWorkspace,
 })
+
+local function on_gaming_workspace(window)
+    local ws = window and window.workspace
+    return ws and ws.name == gamingWsName
+end
+
+local function gaming_allowed(window)
+    if not window then
+        return false
+    end
+
+    local content = window.content_type or window.content
+    if content == "game" then
+        return true
+    end
+
+    local class = window.class or ""
+    if class:match("^steam_app") or class == "gamescope" then
+        return true
+    end
+
+    -- Keep the Steam launch splash with the game during startup.
+    if class == "steam" then
+        local title = window.title or ""
+        if title:match("^Launching") then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function gaming_eject_destination()
+    local last = hl.get_last_workspace()
+    if last and last.name ~= gamingWsName and not last.special then
+        return last.id
+    end
+    return 1
+end
+
+local function eject_from_gaming(window)
+    if not window or not window.address or not window.mapped then
+        return
+    end
+    if not on_gaming_workspace(window) or gaming_allowed(window) then
+        return
+    end
+    if gamingEjectInFlight[window.address] then
+        return
+    end
+
+    gamingEjectInFlight[window.address] = true
+    local addr = "address:" .. window.address
+    hl.dispatch(hl.dsp.window.move({
+        window = addr,
+        workspace = gaming_eject_destination(),
+        follow = false,
+    }))
+    hl.timer(function()
+        gamingEjectInFlight[window.address] = nil
+    end, { timeout = 400, type = "oneshot" })
+end
+
+local function schedule_gaming_eject(window)
+    if not window or not window.address then
+        return
+    end
+    local addr = window.address
+    hl.timer(function()
+        local w = hl.get_window("address:" .. addr)
+        if w then
+            eject_from_gaming(w)
+        end
+    end, { timeout = gamingEjectDelayMs, type = "oneshot" })
+end
+
+local function sweep_gaming_workspace()
+    local wins = hl.get_workspace_windows(gamingWorkspace) or {}
+    for _, w in ipairs(wins) do
+        eject_from_gaming(w)
+    end
+end
+
+-- Open: delay so class/content can settle (steam_app often starts empty).
+hl.on("window.open", schedule_gaming_eject)
+-- Manual / rule moves onto gaming.
+hl.on("window.move_to_workspace", function(window, workspace)
+    if workspace and workspace.name == gamingWsName then
+        schedule_gaming_eject(window)
+    end
+end)
+-- Late classification (content/class/title updates while already on gaming).
+hl.on("window.class", schedule_gaming_eject)
+hl.on("window.title", schedule_gaming_eject)
+hl.on("workspace.active", function(workspace)
+    if workspace and workspace.name == gamingWsName then
+        sweep_gaming_workspace()
+    end
+end)
 
 -- Apps que tú lanzas y suelen flotar: tag para float_place.
 -- Diálogos de Steam/Audacity/etc. NO entran aquí.
