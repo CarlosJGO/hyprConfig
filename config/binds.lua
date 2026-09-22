@@ -336,6 +336,15 @@ hl.bind(
     { locked = true }
 )
 
+-- Strawberry (music player)
+hl.bind(
+    mainMod .. " + SHIFT + Z",
+    hl.dsp.exec_cmd(MUSIC),
+    { locked = true }
+)
+
+hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("busctl --user call org.waywallen.waywallen.Daemon /org/waywallen/waywallen/Daemon org.waywallen.waywallen.Daemon1 Next"))
+
 
 -------------------------------
 ---- WORKSPACES & MONITORS ----

@@ -21,9 +21,10 @@ require("config.workspaces")
 -- Generated from Jugoo's active semantic theme; keep this last.
 require("config.jugoo_theme_generated").apply()
 
--- Keep special workspaces transparent with the lightest supported blur.
+-- Ventanas con esquinas cuadradas (Jugoo theme pisa decoration.rounding; forzar 0).
 hl.config({
 	decoration = {
+		rounding = 0,
 		blur = {
 			enabled = true,
 			size = 1,

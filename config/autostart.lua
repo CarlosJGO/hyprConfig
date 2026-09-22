@@ -3,6 +3,7 @@
 hl.on("hyprland.start", function ()
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     hl.exec_cmd("waywallen")
+    hl.exec_cmd("bluetoothctl power off")
     hl.exec_cmd("xhost +SI:localuser:root")
     hl.exec_cmd("touch /tmp/hypr-start-ran")
     hl.exec_cmd("sh -c 'qs -c overview > /tmp/jugoo-overview.log 2>&1 &'")

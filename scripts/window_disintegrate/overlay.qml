@@ -37,6 +37,8 @@ PanelWindow {
     readonly property real durationMs: Number(Quickshell.env("HYPR_DISINTEGRATE_DURATION"))
     readonly property string imagePath: Quickshell.env("HYPR_DISINTEGRATE_IMAGE")
     readonly property string readyFile: Quickshell.env("HYPR_DISINTEGRATE_READY_FILE")
+    readonly property string effectName: Quickshell.env("HYPR_CLOSE_EFFECT") || "desintegra"
+    readonly property string shaderFile: Quickshell.env("HYPR_CLOSE_SHADER") || "disintegrate.frag.qsb"
     readonly property real winX: Number(Quickshell.env("HYPR_DISINTEGRATE_X")) - Number(Quickshell.env("HYPR_DISINTEGRATE_MONITOR_X"))
     readonly property real winY: Number(Quickshell.env("HYPR_DISINTEGRATE_Y")) - Number(Quickshell.env("HYPR_DISINTEGRATE_MONITOR_Y"))
     readonly property real winW: Number(Quickshell.env("HYPR_DISINTEGRATE_WIDTH"))
@@ -114,11 +116,11 @@ PanelWindow {
         property real blockSize: Number(Quickshell.env("HYPR_DISINTEGRATE_BLOCK"))
         property real intensity: Number(Quickshell.env("HYPR_DISINTEGRATE_INTENSITY"))
         property real seed: Number(Quickshell.env("HYPR_DISINTEGRATE_SEED"))
-        fragmentShader: Qt.resolvedUrl("disintegrate.frag.qsb")
+        fragmentShader: Qt.resolvedUrl(root.shaderFile)
 
         onStatusChanged: {
             if (status === ShaderEffect.Error) {
-                console.warn("disintegrate shader error:", log)
+                console.warn(root.effectName, "shader error:", log)
                 fallbackFade.start()
             }
         }
@@ -131,7 +133,8 @@ PanelWindow {
         from: 0.0
         to: 1.0
         duration: root.durationMs
-        easing.type: Easing.OutCubic
+        // Tornado: linear so spin/curl start immediately (no whip delay).
+        easing.type: root.effectName === "tornado" ? Easing.Linear : Easing.OutCubic
     }
 
     NumberAnimation {

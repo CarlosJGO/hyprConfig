@@ -75,7 +75,7 @@ hl.config({
 
         dim_special = 0.85,
 
-        rounding = 10,
+        rounding = 0,
 
         active_opacity = 0.95,
 
