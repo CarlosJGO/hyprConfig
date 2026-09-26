@@ -9,6 +9,8 @@ MUSIC        = "strawberry"
 STEAM        = "steam"
 CAMARA       = "snapshot"
 OBSIDIAN     = "obsidian"
+CHATGPT      = "chatgpt"
+
 
 -- Monitors
 MONITOR1 = ""

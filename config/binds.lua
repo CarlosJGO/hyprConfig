@@ -12,12 +12,18 @@ local function launch(cmd)
     return hl.dsp.exec_cmd(cmd, launchRules)
 end
 
--- Commands sent to the running Jugoo instance (Gio.Application primary).
--- Prefer: jugoo action <name>   (see: jugoo action list)
--- Legacy --toggle-* flags still work and map to the same actions.
+-- Fast path: activate a Gio action on the running shell (no Python cold-start).
+-- Press + non_consuming: dismiss starts on click-down; the click still reaches its target.
+local function jugoo_action(name)
+    return hl.dsp.exec_cmd("gapplication action com.jugoo.Shell " .. name)
+end
+
 local function jugoo_cmd(args)
     return hl.dsp.exec_cmd("/bin/sh -c '\"" .. jugoo .. "\" " .. args .. "'")
 end
+
+hl.bind("mouse:272", jugoo_action("dismiss-popups-outside"), { non_consuming = true })
+hl.bind("mouse:273", jugoo_action("dismiss-popups-outside"), { non_consuming = true })
 
 
 ---------------------------
@@ -189,6 +195,7 @@ hl.bind(mainMod .. " + C",      launch(launchPrefix .. CALCULATOR))
 hl.bind(mainMod .. " + k",      launch(launchPrefix .. CAMARA))
 hl.bind(mainMod .. " + o",      launch(launchPrefix .. OBSIDIAN))
 hl.bind(mainMod .. " + W",      launch(launchPrefix .. BROWSER))
+hl.bind(mainMod .. " + CONTROL + c",      launch(launchPrefix .. CHATGPT))
 
 -- Jugoo (running instance via Gio.Application — does not spawn a second shell)
 hl.bind(mainMod .. " + Space",  jugoo_cmd("action launcher"))

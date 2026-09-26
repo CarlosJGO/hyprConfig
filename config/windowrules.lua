@@ -13,17 +13,17 @@ hl.window_rule({
 })
 
 -- Jugoo popups: positioned by the shell, not Hyprland.
+-- Must accept focus so an outside click changes the active window and
+-- PopupOutsideDismiss can close without eating that click.
 hl.window_rule({
     name = "shell-popups",
     match = { title = "^Jugoo " },
     float = true,
     center = false,
     persistent_size = false,
-
-    no_focus = true,
-    no_initial_focus = true,
-    focus_on_activate = false,
-    suppress_event = "activate activatefocus",
+    no_focus = false,
+    no_initial_focus = false,
+    focus_on_activate = true,
 })
 
 hl.window_rule({
@@ -31,6 +31,18 @@ hl.window_rule({
     match = {
         class = "^com\\.jugoo\\.Shell$",
         title = "^Jugoo Notification Toast",
+    },
+    no_focus = true,
+    no_initial_focus = true,
+    focus_on_activate = false,
+    suppress_event = "activate activatefocus",
+})
+
+hl.window_rule({
+    name = "NO-FOCUS-SHELL-PASSIVE",
+    match = {
+        class = "^com\\.jugoo\\.Shell$",
+        title = "^Jugoo (Volume OSD|Memory Popup|Assistant)$",
     },
     no_focus = true,
     no_initial_focus = true,
@@ -146,13 +158,15 @@ hl.window_rule({
 })
 
 -- Gaming
--- Allowlist: content=game, steam_app*/gamescope, Steam "Launching..." splash.
+-- Allowlist: content=game, steam_app*/gamescope, Steam "Launching..." splash,
+-- Picture-in-Picture (pinned overlay — must stay while gaming).
 -- Everything else that opens on or is moved into name:gaming is ejected.
 local gamingApps = "^(steam_app.*|gamescope)$"
 local gamingWorkspace = "name:gaming"
 local gamingWsName = "gaming"
 local gamingEjectDelayMs = 250
 local gamingEjectInFlight = {}
+local pipTitlePattern = "^[Pp]icture[-%s]?[Ii]n[-%s]?[Pp]icture"
 
 hl.window_rule({ match = { content = "game" }, workspace = gamingWorkspace })
 hl.window_rule({ match = { xdg_tag = "^(.*game.*)$" }, workspace = gamingWorkspace, fullscreen_state = 2, content = "game", sync_fullscreen = true })
@@ -196,9 +210,22 @@ local function on_gaming_workspace(window)
     return ws and ws.name == gamingWsName
 end
 
+local function is_picture_in_picture(window)
+    local title = window.title or ""
+    if title:match(pipTitlePattern) then
+        return true
+    end
+    local initial = window.initial_title or ""
+    return initial:match(pipTitlePattern) ~= nil
+end
+
 local function gaming_allowed(window)
     if not window then
         return false
+    end
+
+    if is_picture_in_picture(window) then
+        return true
     end
 
     local content = window.content_type or window.content

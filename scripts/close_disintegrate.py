@@ -188,7 +188,12 @@ def focus_away_from(address, workspace_id=None):
 
 
 def seize_closing_window(address, workspace_id=None):
-    """Mark window as in-flight: no focus, no retarget, click-through-ish."""
+    """Mark window as in-flight: no focus, no retarget, click-through-ish.
+
+    Intentionally avoid forcing focus to another client here: that side effect is
+    what causes the mouse to jump to a different window while the close effect is
+    still playing.
+    """
     try:
         tag_window(address, f"+{CLOSING_TAG}")
     except RuntimeError as error:
@@ -202,7 +207,6 @@ def seize_closing_window(address, workspace_id=None):
             set_prop(address, prop, value)
         except RuntimeError as error:
             print(f"close_disintegrate seize {prop}: {error}", file=sys.stderr)
-    focus_away_from(address, workspace_id=workspace_id)
 
 
 def active_window():
