@@ -130,11 +130,6 @@ def prepare_silent_close(address):
             print(f"close_disintegrate prep {prop}: {error}", file=sys.stderr)
 
 
-def close_silently(address):
-    prepare_silent_close(address)
-    close_natively(address)
-
-
 def window_tags(window):
     tags = window.get("tags") or []
     if isinstance(tags, str):
@@ -207,6 +202,43 @@ def seize_closing_window(address, workspace_id=None):
             set_prop(address, prop, value)
         except RuntimeError as error:
             print(f"close_disintegrate seize {prop}: {error}", file=sys.stderr)
+
+
+def window_still_exists(address, stable_id=None):
+    try:
+        windows = json.loads(run(["hyprctl", "clients", "-j"]))
+    except (RuntimeError, json.JSONDecodeError):
+        return True
+    return any(
+        window.get("address") == address
+        and (stable_id is None or window.get("stableId") == stable_id)
+        for window in windows
+    )
+
+
+def restore_closing_window(address, stable_id=None):
+    """Undo the temporary window state if the same client is still alive."""
+    if not window_still_exists(address, stable_id):
+        return
+
+    try:
+        tag_window(address, f"-{CLOSING_TAG}")
+    except RuntimeError as error:
+        print(f"close_disintegrate untag: {error}", file=sys.stderr)
+    for prop, value in (
+        ("no_focus", "0"),
+        ("no_follow_mouse", "0"),
+        ("focus_on_activate", "1"),
+        ("animationstyle", "default"),
+        ("noanim", "0"),
+        ("no_anim", "0"),
+        ("alpha", "1"),
+        ("alphaoverride", "0"),
+    ):
+        try:
+            set_prop(address, prop, value)
+        except RuntimeError as error:
+            print(f"close_disintegrate restore {prop}: {error}", file=sys.stderr)
 
 
 def active_window():
@@ -317,7 +349,9 @@ def release_address(lock_fd, path):
             pass
 
 
-def show_overlay(geometry, image_path, effect, monitor=None, ready_path=None):
+def show_overlay(
+    geometry, image_path, effect, monitor=None, ready_path=None, daemonize=True
+):
     x, y = geometry["at"]
     width, height = geometry["size"]
     if monitor is None:
@@ -349,8 +383,12 @@ def show_overlay(geometry, image_path, effect, monitor=None, ready_path=None):
     if ready_path:
         environment["HYPR_DISINTEGRATE_READY_FILE"] = ready_path
     overlay = os.path.join(os.path.dirname(__file__), "window_disintegrate", "overlay.qml")
+    command = ["qs"]
+    if daemonize:
+        command.append("-d")
+    command.extend(["-p", overlay])
     return subprocess.Popen(
-        ["qs", "-d", "-p", overlay],
+        command,
         env=environment,
         start_new_session=True,
         stdout=subprocess.DEVNULL,
@@ -388,25 +426,74 @@ def run_overlay_only(geometry_spec, effect):
         raise
 
 
-def _finish_close_after_ready(address, ready_path, lock_fd, lock_path):
-    """Child: wait for plate, then close the SNAPSHOTTED address only."""
+def _stop_overlay(process):
+    if process.poll() is not None:
+        return
+    process.terminate()
     try:
-        wait_until_ready(ready_path)
+        process.wait(timeout=1.0)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def _wait_for_overlay(process, effect):
+    timeout_s = effect_duration_ms(effect) / 1000 + 2.0
+    try:
+        process.wait(timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        _stop_overlay(process)
+
+
+def _finish_close_after_ready(
+    address, stable_id, geometry, image_path, effect, monitor,
+    ready_path, lock_fd, lock_path,
+):
+    """Child: run the overlay, close the snapshot, then restore a surviving client."""
+    overlay_process = None
+    seized = False
+    try:
+        overlay_process = show_overlay(
+            geometry,
+            image_path,
+            effect,
+            monitor=monitor,
+            ready_path=ready_path,
+            daemonize=False,
+        )
+        if not wait_until_ready(ready_path):
+            _stop_overlay(overlay_process)
+            close_natively(address)
+            return
+        seized = True
+        seize_closing_window(address)
         prepare_silent_close(address)
         close_natively(address)
     except Exception as error:
         print(f"close_disintegrate finish: {error}", file=sys.stderr)
         try:
-            close_silently(address)
+            close_natively(address)
         except Exception as fallback_error:
             print(f"close_disintegrate fallback: {fallback_error}", file=sys.stderr)
     finally:
-        if ready_path:
+        try:
+            if overlay_process is not None:
+                _wait_for_overlay(overlay_process, effect)
+        finally:
             try:
-                os.unlink(ready_path)
-            except FileNotFoundError:
-                pass
-        release_address(lock_fd, lock_path)
+                if seized:
+                    restore_closing_window(address, stable_id)
+            finally:
+                try:
+                    os.unlink(image_path)
+                except FileNotFoundError:
+                    pass
+                if ready_path:
+                    try:
+                        os.unlink(ready_path)
+                    except FileNotFoundError:
+                        pass
+                release_address(lock_fd, lock_path)
 
 
 def run_window_close(effect):
@@ -428,7 +515,6 @@ def run_window_close(effect):
 
     image_path = None
     ready_path = None
-    workspace_id = (window.get("workspace") or {}).get("id")
     try:
         with tempfile.NamedTemporaryFile(
             prefix="hypr-disintegrate-", suffix=".png", delete=False
@@ -450,19 +536,25 @@ def run_window_close(effect):
         # Capture while still focused (avoids inactive_opacity looking dim).
         capture_geometry(geometry, image_path)
         ready_path = make_ready_path()
-        show_overlay(geometry, image_path, effect, monitor=monitor, ready_path=ready_path)
-        # Seize immediately after overlay launch: no second Q / no focus / pass focus.
-        seize_closing_window(address, workspace_id=workspace_id)
 
-        # Return the bind immediately: finish close in a child process so the
-        # next SUPER+Q can target another window without waiting.
+        # Return the bind immediately; the child owns the overlay and close lifecycle.
         # flock is inherited; parent must NOT close/unlock the fd.
         pid = os.fork()
         if pid == 0:
-            _finish_close_after_ready(address, ready_path, lock_fd, lock_path)
+            _finish_close_after_ready(
+                address,
+                window.get("stableId"),
+                geometry,
+                image_path,
+                effect,
+                monitor,
+                ready_path,
+                lock_fd,
+                lock_path,
+            )
             os._exit(0)
 
-        # Parent: overlay owns the PNG; child owns the lock/ready cleanup.
+        # Parent: child owns the overlay, PNG, ready file, and lock cleanup.
         # Drop the Python ref without unlocking — child keeps the flock alive.
         image_path = None
         ready_path = None
@@ -471,7 +563,7 @@ def run_window_close(effect):
     except Exception as error:
         print(f"close_disintegrate: {error}", file=sys.stderr)
         try:
-            close_silently(address)
+            close_natively(address)
         except Exception as fallback_error:
             print(f"close_disintegrate fallback: {fallback_error}", file=sys.stderr)
         if image_path:

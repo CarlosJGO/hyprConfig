@@ -80,12 +80,12 @@ void main() {
     );
 
     vec2 sampleUv = rotated / localScale + 0.5;
-
-    if (sampleUv.x < 0.0 || sampleUv.x > 1.0 || sampleUv.y < 0.0 || sampleUv.y > 1.0) {
-        fragColor = vec4(0.0);
-        return;
-    }
-
+    float sampleEdge = min(
+        min(sampleUv.x, 1.0 - sampleUv.x) * aspect,
+        min(sampleUv.y, 1.0 - sampleUv.y)
+    );
+    float sampleFeather = smoothstep(-0.012, 0.012, sampleEdge);
+    float sampleCoverage = mix(1.0, sampleFeather, smoothstep(0.0, 0.08, t));
     sampleUv = clamp(sampleUv, vec2(0.001), vec2(0.999));
     vec4 color = texture(source, sampleUv);
 
@@ -100,7 +100,7 @@ void main() {
     float cornerR = cornerT * min(halfSize.x, halfSize.y);
     float roundedDist = sdRoundedBox(shapeP, halfSize, cornerR);
 
-    float circleT = smoothstep(0.22, 0.72, t);
+    float circleT = smoothstep(0.0, 0.72, centerJoin);
     float circDist = length(circSpace) - circleR;
     float shapeDist = mix(roundedDist, circDist, circleT);
 
@@ -108,6 +108,6 @@ void main() {
     float shapeMask = 1.0 - smoothstep(-soft, soft, shapeDist);
 
     float gulp = smoothstep(0.0, 0.035, scale);
-    color *= shapeMask * gulp * qt_Opacity;
+    color *= shapeMask * sampleCoverage * gulp * qt_Opacity;
     fragColor = color;
 }
