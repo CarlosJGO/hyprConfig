@@ -10,7 +10,7 @@ STEAM        = "steam"
 CAMARA       = "snapshot"
 OBSIDIAN     = "obsidian"
 CHATGPT      = "chatgpt"
-
+whats        = "flatpak run com.rtosta.zapzap"
 
 -- Monitors
 MONITOR1 = ""

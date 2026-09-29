@@ -24,9 +24,6 @@ import sys
 import tempfile
 import time
 
-CLOSING_TAG = "closing"
-
-
 READY_TIMEOUT_S = float(os.environ.get("HYPR_DISINTEGRATE_READY_TIMEOUT", "0.9"))
 
 # Catálogo de salidas. Añade una fila (y su .frag/.qsb) para un efecto nuevo.
@@ -101,144 +98,11 @@ def dispatch(expression):
     run(["hyprctl", "dispatch", expression])
 
 
-def set_prop(address, prop, value):
-    dispatch(
-        "hl.dsp.window.set_prop({"
-        f'window="address:{address}", prop="{prop}", value="{value}"'
-        "})"
-    )
-
-
 def close_natively(address=None):
     expression = "hl.dsp.window.close()"
     if address:
         expression = f'hl.dsp.window.close({{window="address:{address}"}})'
     dispatch(expression)
-
-
-def prepare_silent_close(address):
-    for prop, value in (
-        ("animationstyle", "none"),
-        ("noanim", "1"),
-        ("no_anim", "1"),
-        ("alphaoverride", "1"),
-        ("alpha", "0"),
-    ):
-        try:
-            set_prop(address, prop, value)
-        except RuntimeError as error:
-            print(f"close_disintegrate prep {prop}: {error}", file=sys.stderr)
-
-
-def window_tags(window):
-    tags = window.get("tags") or []
-    if isinstance(tags, str):
-        return [tags]
-    return [str(tag) for tag in tags]
-
-
-def is_closing_window(window):
-    return CLOSING_TAG in window_tags(window)
-
-
-def tag_window(address, tag):
-    dispatch(
-        "hl.dsp.window.tag({"
-        f'window="address:{address}", tag="{tag}"'
-        "})"
-    )
-
-
-def focus_away_from(address, workspace_id=None):
-    """Move focus off the dying window so SUPER+Q cannot retarget it."""
-    try:
-        clients = json.loads(run(["hyprctl", "clients", "-j"]))
-    except RuntimeError:
-        clients = []
-    candidates = []
-    for client in clients:
-        if client.get("address") == address:
-            continue
-        if is_closing_window(client):
-            continue
-        if client.get("hidden"):
-            continue
-        if workspace_id is not None:
-            ws = client.get("workspace") or {}
-            if ws.get("id") != workspace_id:
-                continue
-        candidates.append(client)
-    candidates.sort(key=lambda item: item.get("focusHistoryID", 10**9))
-    if candidates:
-        other = candidates[0]["address"]
-        try:
-            dispatch(f'hl.dsp.focus({{window="address:{other}"}})')
-            return
-        except RuntimeError as error:
-            print(f"close_disintegrate focus: {error}", file=sys.stderr)
-    try:
-        dispatch('hl.dsp.focus({direction="r"})')
-    except RuntimeError as error:
-        print(f"close_disintegrate focus fallback: {error}", file=sys.stderr)
-
-
-def seize_closing_window(address, workspace_id=None):
-    """Mark window as in-flight: no focus, no retarget, click-through-ish.
-
-    Intentionally avoid forcing focus to another client here: that side effect is
-    what causes the mouse to jump to a different window while the close effect is
-    still playing.
-    """
-    try:
-        tag_window(address, f"+{CLOSING_TAG}")
-    except RuntimeError as error:
-        print(f"close_disintegrate tag: {error}", file=sys.stderr)
-    for prop, value in (
-        ("no_focus", "1"),
-        ("no_follow_mouse", "1"),
-        ("focus_on_activate", "0"),
-    ):
-        try:
-            set_prop(address, prop, value)
-        except RuntimeError as error:
-            print(f"close_disintegrate seize {prop}: {error}", file=sys.stderr)
-
-
-def window_still_exists(address, stable_id=None):
-    try:
-        windows = json.loads(run(["hyprctl", "clients", "-j"]))
-    except (RuntimeError, json.JSONDecodeError):
-        return True
-    return any(
-        window.get("address") == address
-        and (stable_id is None or window.get("stableId") == stable_id)
-        for window in windows
-    )
-
-
-def restore_closing_window(address, stable_id=None):
-    """Undo the temporary window state if the same client is still alive."""
-    if not window_still_exists(address, stable_id):
-        return
-
-    try:
-        tag_window(address, f"-{CLOSING_TAG}")
-    except RuntimeError as error:
-        print(f"close_disintegrate untag: {error}", file=sys.stderr)
-    for prop, value in (
-        ("no_focus", "0"),
-        ("no_follow_mouse", "0"),
-        ("focus_on_activate", "1"),
-        ("animationstyle", "default"),
-        ("noanim", "0"),
-        ("no_anim", "0"),
-        ("alpha", "1"),
-        ("alphaoverride", "0"),
-    ):
-        try:
-            set_prop(address, prop, value)
-        except RuntimeError as error:
-            print(f"close_disintegrate restore {prop}: {error}", file=sys.stderr)
 
 
 def active_window():
@@ -314,7 +178,8 @@ def try_claim_address(address):
     """Exclusive flock so double-Q is ignored even after the parent exits.
 
     PID-based locks were wrong: parent forks and dies, so a second Q treated
-    the lock as stale and restarted the effect mid-animation.
+    the lock as stale and restarted the effect mid-animation. Keep the lock
+    file inode so concurrent callers always coordinate on the same flock.
     """
     path = address_lock_path(address)
     fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
@@ -322,17 +187,18 @@ def try_claim_address(address):
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         os.close(fd)
-        return None, path
+        return None
     try:
         os.ftruncate(fd, 0)
         os.lseek(fd, 0, os.SEEK_SET)
         os.write(fd, f"{os.getpid()}\n".encode())
     except OSError:
         pass
-    return fd, path
+    return fd
 
 
-def release_address(lock_fd, path):
+def release_address(lock_fd):
+    """Release the lock without unlinking its file and splitting future locks."""
     if lock_fd is not None:
         try:
             fcntl.flock(lock_fd, fcntl.LOCK_UN)
@@ -341,11 +207,6 @@ def release_address(lock_fd, path):
         try:
             os.close(lock_fd)
         except OSError:
-            pass
-    if path:
-        try:
-            os.unlink(path)
-        except FileNotFoundError:
             pass
 
 
@@ -446,12 +307,10 @@ def _wait_for_overlay(process, effect):
 
 
 def _finish_close_after_ready(
-    address, stable_id, geometry, image_path, effect, monitor,
-    ready_path, lock_fd, lock_path,
+    address, geometry, image_path, effect, monitor, ready_path, lock_fd,
 ):
-    """Child: run the overlay, close the snapshot, then restore a surviving client."""
+    """Child: close the snapshot after the overlay is ready, then clean up."""
     overlay_process = None
-    seized = False
     try:
         overlay_process = show_overlay(
             geometry,
@@ -465,9 +324,6 @@ def _finish_close_after_ready(
             _stop_overlay(overlay_process)
             close_natively(address)
             return
-        seized = True
-        seize_closing_window(address)
-        prepare_silent_close(address)
         close_natively(address)
     except Exception as error:
         print(f"close_disintegrate finish: {error}", file=sys.stderr)
@@ -481,19 +337,15 @@ def _finish_close_after_ready(
                 _wait_for_overlay(overlay_process, effect)
         finally:
             try:
-                if seized:
-                    restore_closing_window(address, stable_id)
-            finally:
+                os.unlink(image_path)
+            except FileNotFoundError:
+                pass
+            if ready_path:
                 try:
-                    os.unlink(image_path)
+                    os.unlink(ready_path)
                 except FileNotFoundError:
                     pass
-                if ready_path:
-                    try:
-                        os.unlink(ready_path)
-                    except FileNotFoundError:
-                        pass
-                release_address(lock_fd, lock_path)
+            release_address(lock_fd)
 
 
 def run_window_close(effect):
@@ -504,15 +356,7 @@ def run_window_close(effect):
         close_natively(address)
         return
 
-    if is_closing_window(window):
-        # Already seized / animating; never restart the effect.
-        return
-
-    lock_fd, lock_path = try_claim_address(address)
-    if lock_fd is None:
-        # This window is already playing a close effect; ignore duplicate Q.
-        return
-
+    lock_fd = None
     image_path = None
     ready_path = None
     try:
@@ -535,6 +379,10 @@ def run_window_close(effect):
 
         # Capture while still focused (avoids inactive_opacity looking dim).
         capture_geometry(geometry, image_path)
+        lock_fd = try_claim_address(address)
+        if lock_fd is None:
+            os.unlink(image_path)
+            return
         ready_path = make_ready_path()
 
         # Return the bind immediately; the child owns the overlay and close lifecycle.
@@ -543,14 +391,12 @@ def run_window_close(effect):
         if pid == 0:
             _finish_close_after_ready(
                 address,
-                window.get("stableId"),
                 geometry,
                 image_path,
                 effect,
                 monitor,
                 ready_path,
                 lock_fd,
-                lock_path,
             )
             os._exit(0)
 
@@ -559,7 +405,6 @@ def run_window_close(effect):
         image_path = None
         ready_path = None
         lock_fd = None
-        lock_path = None
     except Exception as error:
         print(f"close_disintegrate: {error}", file=sys.stderr)
         try:
@@ -576,7 +421,7 @@ def run_window_close(effect):
                 os.unlink(ready_path)
             except FileNotFoundError:
                 pass
-        release_address(lock_fd, lock_path)
+        release_address(lock_fd)
 
 
 def main():

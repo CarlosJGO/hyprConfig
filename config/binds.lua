@@ -195,12 +195,14 @@ hl.bind(mainMod .. " + C",      launch(launchPrefix .. CALCULATOR))
 hl.bind(mainMod .. " + k",      launch(launchPrefix .. CAMARA))
 hl.bind(mainMod .. " + o",      launch(launchPrefix .. OBSIDIAN))
 hl.bind(mainMod .. " + W",      launch(launchPrefix .. BROWSER))
-hl.bind(mainMod .. " + CONTROL + c",      launch(launchPrefix .. CHATGPT))
+hl.bind(mainMod .. " + CONTROL + c", launch(launchPrefix .. CHATGPT))
+hl.bind(mainMod .. " + CONTROL + w", launch(launchPrefix .. whats))
+
 
 -- Jugoo (running instance via Gio.Application — does not spawn a second shell)
-hl.bind(mainMod .. " + Space",  jugoo_cmd("action launcher"))
-hl.bind(mainMod .. " + period", jugoo_cmd("action emoji"))
-hl.bind(mainMod .. " + V",      jugoo_cmd("action clipboard"))
+hl.bind(mainMod .. " + Space",  jugoo_action("launcher"))
+hl.bind(mainMod .. " + period", jugoo_action("emoji"))
+hl.bind(mainMod .. " + V",      jugoo_action("clipboard"))
 -- Settings also opens from Search; global bind kept for muscle memory.
 hl.bind(mainMod .. " + Z",      jugoo_cmd("action settings"))
 hl.bind(mainMod .. " + X",      jugoo_cmd("action control-center"))
@@ -310,6 +312,13 @@ hl.bind(
     "XF86MonBrightnessDown",
     hl.dsp.exec_cmd("brightnessctl set 5%-"),
     { locked = true, repeating = true }
+)
+
+-------- Mute/Desmute Discord
+hl.bind(
+    mainMod .. " + CONTROL + M",
+    hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
+    { locked = true }
 )
 
 
