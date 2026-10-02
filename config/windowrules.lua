@@ -384,9 +384,33 @@ hl.window_rule({ match = { class = "^(org\\.kde\\.keditfiletype)$" }, float = tr
 hl.window_rule({ match = { class = "^(org\\.kde\\.ark)$" }, size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" }, tag = "+autoplace" })
 
 hl.window_rule({
+    name = "dolphin-file-exists-dialog",
+    match = {
+        class = "^org\\.kde\\.dolphin$",
+        title = "^El archivo ya existe.*Dolphin$",
+    },
+    float = true,
+    persistent_size = false,
+    size = { "696", "385" },
+    move = { "612", "392" },
+})
+
+hl.window_rule({
+    name = "dolphin-progress-dialog",
+    match = {
+        class = "^org\\.kde\\.dolphin$",
+        title = "^Diálogo de progreso.*Dolphin$",
+    },
+    float = true,
+    persistent_size = false,
+    size = { "823", "208" },
+    move = { "539", "178" },
+})
+
+hl.window_rule({
     match = {
         class = "^(org\\.kde\\.dolphin)$",
-        title = "negative:^(Moving.*|Create New.*|Extract.*|Compress.*|Copying.*|Progress.*|Configure.*|Properties.*|Choose\\sApplication.*)$",
+        title = "negative:^(Moving.*|Create New.*|Extract.*|Compress.*|Copying.*|Progress.*|Configure.*|Properties.*|Choose\\sApplication.*|El archivo ya existe.*Dolphin|Diálogo de progreso.*Dolphin)$",
     },
     float = true,
     center = true,
@@ -401,6 +425,8 @@ hl.window_rule({ match = { class = "^(firefox|zen)$" }, opacity = "1.0 override"
 -- Terminals: keep Kitty/Ghostty transparency, but let Hyprland apply a very light blur
 -- behind them so the wallpaper is softened and the text remains readable.
 hl.window_rule({ match = { class = terminals }, opacity = "1.0 override" })
+
+
 hl.window_rule({ match = { class = "^(mpv|org.kde.haruna|.*plex.*|org\\.kde\\.gwenview|.*vlc.*)$" }, opacity = "1.0 override" })
 
 -- Float Utility Windows (las que sueles abrir tú)
