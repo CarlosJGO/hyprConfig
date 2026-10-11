@@ -47,12 +47,12 @@ void main() {
     float join = clamp((t - (1.0 - rNorm) * rimDelay) / max(1e-3, 1.0 - rimDelay * 0.35), 0.0, 1.0);
     join = join * join * (3.0 - 2.0 * join);
 
-    // Center join (rNorm=0): shrink of the plate only starts once the eye is spinning.
+    // Center join (rNorm=0) controls when the circle morph begins.
     float centerJoin = clamp((t - rimDelay) / max(1e-3, 1.0 - rimDelay), 0.0, 1.0);
     centerJoin = centerJoin * centerJoin * (3.0 - 2.0 * centerJoin);
 
-    // Silhouette shrink waits for the center; per-pixel shrink follows local join.
-    float scale = mix(1.0, 0.006, pow(centerJoin, 1.1));
+    // The silhouette shrinks with the spin; active rings follow their local join.
+    float scale = mix(1.0, 0.006, pow(t, 1.1));
     scale = max(scale, 0.001);
     // Still-static rings stay full size; spinning rings contract with the plate.
     float localScale = mix(1.0, scale, join);
@@ -89,7 +89,7 @@ void main() {
     sampleUv = clamp(sampleUv, vec2(0.001), vec2(0.999));
     vec4 color = texture(source, sampleUv);
 
-    // Morph rect → circle during the spin-in; silhouette size follows centerJoin scale.
+    // Morph rect to circle as the center joins the spin.
     vec2 shapeP = uv - 0.5;
     vec2 halfSize = vec2(0.5 * scale);
     float inscribedR = 0.5 * min(aspect, 1.0);
@@ -101,7 +101,15 @@ void main() {
     float roundedDist = sdRoundedBox(shapeP, halfSize, cornerR);
 
     float circleT = smoothstep(0.0, 0.72, centerJoin);
-    float circDist = length(circSpace) - circleR;
+    float radialAngle = atan(circSpace.y, circSpace.x);
+    float tipAngle = hash11(seed + 2.17) * 6.28318530718;
+    float tipAlignment = max(cos(radialAngle - tipAngle), 0.0);
+    float tipProgress = smoothstep(0.05, 0.85, centerJoin);
+    float tearNoise = sin(radialAngle * 11.0 + seed) * 0.55
+        + sin(radialAngle * 19.0 - seed * 0.7) * 0.45;
+    float taperedRadius = circleR * (1.0 - 0.97 * tipProgress * pow(tipAlignment, 0.6));
+    taperedRadius += circleR * tipProgress * pow(tipAlignment, 2.0) * tearNoise * 0.045;
+    float circDist = length(circSpace) - max(circleR * 0.018, taperedRadius);
     float shapeDist = mix(roundedDist, circDist, circleT);
 
     float soft = mix(0.003, 0.016, circleT) * max(scale, 0.08);

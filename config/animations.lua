@@ -260,6 +260,12 @@ hl.on("window.open_early", function(window)
     if not window then
         return
     end
+    -- Los popups de la barra tienen su propia salida desde el bloque.
+    -- No cambiar windowsIn global al abrirlos.
+    local title = window.title or ""
+    if title:match("^Jugoo ") then
+        return
+    end
     apply_window_in_effect(WINDOW_IN_EFFECTS[math.random(#WINDOW_IN_EFFECTS)])
 end)
 

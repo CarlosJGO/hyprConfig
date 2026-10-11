@@ -70,6 +70,8 @@ return function(ctx)
     hl.bind(mainMod .. " + X",      jugoo_cmd("action control-center"))
     hl.bind(mainMod .. " + A",      jugoo_cmd("action notifications"))
     hl.bind(mainMod .. " + ALT + C", jugoo_cmd("action session"))
+    -- Steam games panel (right screen edge); SUPER+S / SUPER+SHIFT+S stay for the scratchpad.
+    hl.bind(mainMod .. " + ALT + S", jugoo_action("steam"))
 
     -- Session lock
     hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("/home/carlosjgo/.local/bin/hyprlock-random-bg"))

@@ -39,7 +39,7 @@ WINDOW_OUT_EFFECTS = [
     {
         "name": "tornado",
         "shader": "tornado.frag.qsb",
-        "duration_ms": 780,
+        "duration_ms": 500,
         "block_size": 0.018,
         "intensity": 1.15,
     },

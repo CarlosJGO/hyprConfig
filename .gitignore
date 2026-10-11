@@ -31,3 +31,12 @@ config/jugoo_theme_generated.lua
 .tmp/
 tmp/
 state/
+
+# User-specific files
+ARCHITECTURE.md
+DECISIONS.md
+DESIGN.md
+MEMORY.md
+PRD.md
+RULES.md
+TASKS.md
