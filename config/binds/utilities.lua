@@ -7,6 +7,20 @@ return function(ctx)
     ---- UTILITIES ----
     -------------------
 
+    -- Close only Unity's 20x20 floating XWayland windows.
+    hl.bind(mainMod .. " + minus", function()
+        for _, window in ipairs(hl.get_windows()) do
+            if window.mapped and window.floating and window.xwayland
+                and window.class == window.title
+                and window.class and window.class:match("^Unity%-%d")
+                and window.size and window.size.x == 20 and window.size.y == 20
+                and window.address and window.address:match("^0x[0-9a-fA-F]+$")
+            then
+                hl.dispatch(hl.dsp.window.close({ window = "address:" .. window.address }))
+            end
+        end
+    end)
+
     -- Screen Capture
     hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("hyprpicker -a -n"))
 
@@ -33,10 +47,21 @@ return function(ctx)
         { locked = true }
     )
 
-    -- Strawberry (music player)
+    -- Focus Strawberry's existing window, or launch the music player.
     hl.bind(
         mainMod .. " + SHIFT + Z",
-        hl.dsp.exec_cmd(MUSIC),
+        function()
+            for _, window in ipairs(hl.get_windows()) do
+                if window.mapped and window.address
+                    and (window.class == "strawberry"
+                        or window.class == "org.strawberrymusicplayer.strawberry")
+                then
+                    hl.dispatch(hl.dsp.focus({ window = "address:" .. window.address }))
+                    return
+                end
+            end
+            hl.dispatch(hl.dsp.exec_cmd(MUSIC))
+        end,
         { locked = true }
     )
 

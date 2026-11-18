@@ -16,8 +16,8 @@ return function(ctx)
     local whats = ctx.whats
     local IDE = ctx.IDE
 
-    local function launch(cmd)
-        return hl.dsp.exec_cmd(cmd, launchRules)
+    local function launch(cmd, rules)
+        return hl.dsp.exec_cmd(cmd, rules or launchRules)
     end
 
     ------------------
@@ -34,10 +34,11 @@ return function(ctx)
     local doubleSuperTimeoutMs = 400
     local doubleSuperPending = false
 
-    local function onSuperRelease()
+    local function onSuperRelease(floatTerminal)
         if doubleSuperPending then
             doubleSuperPending = false
-            hl.dispatch(launch(launchPrefix .. TERMINAL))
+            local rules = floatTerminal and { float = true, tag = "+autoplace" } or nil
+            hl.dispatch(launch(launchPrefix .. TERMINAL, rules))
             return
         end
 
@@ -48,8 +49,10 @@ return function(ctx)
     end
 
     -------esto es para abrir la terminal con super + super, si se presiona dos veces el super se abre la terminal
-    hl.bind(mainMod .. " + SUPER_L", onSuperRelease, { release = true, non_consuming = true })
-    hl.bind(mainMod .. " + SUPER_R", onSuperRelease, { release = true, non_consuming = true })
+    hl.bind(mainMod .. " + SUPER_L", function() onSuperRelease(false) end, { release = true, non_consuming = true })
+    hl.bind(mainMod .. " + SUPER_R", function() onSuperRelease(false) end, { release = true, non_consuming = true })
+    hl.bind(mainMod .. " + SHIFT + SUPER_L", function() onSuperRelease(true) end, { release = true, non_consuming = true })
+    hl.bind(mainMod .. " + SHIFT + SUPER_R", function() onSuperRelease(true) end, { release = true, non_consuming = true })
 
     hl.bind(mainMod .. " + E",      launch(launchPrefix .. FILE_MANAGER))
     hl.bind(mainMod .. " + T",      launch(launchPrefix .. EDITOR))
@@ -65,8 +68,8 @@ return function(ctx)
     hl.bind(mainMod .. " + Space",  jugoo_action("launcher"))
     hl.bind(mainMod .. " + period", jugoo_action("emoji"))
     hl.bind(mainMod .. " + V",      jugoo_action("clipboard"))
-    -- Settings also opens from Search; global bind kept for muscle memory.
-    hl.bind(mainMod .. " + Z",      jugoo_cmd("action settings"))
+    hl.bind(mainMod .. " + Z",      jugoo_action("radial-launcher"))
+    hl.bind(mainMod .. " + mouse:274", jugoo_action("radial-launcher-cursor"))
     hl.bind(mainMod .. " + X",      jugoo_cmd("action control-center"))
     hl.bind(mainMod .. " + A",      jugoo_cmd("action notifications"))
     hl.bind(mainMod .. " + ALT + C", jugoo_cmd("action session"))

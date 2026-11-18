@@ -101,12 +101,12 @@ return function(ctx)
     -- Special workspace (scratchpad)
     hl.bind(
         mainMod .. " + SHIFT + S",
-        hl.dsp.window.move({ workspace = "special" })
+        hl.dsp.window.move({ workspace = "special:scratch" })
     )
 
     hl.bind(
         mainMod .. " + S",
-        hl.dsp.workspace.toggle_special()
+        hl.dsp.workspace.toggle_special("scratch")
     )
 
 

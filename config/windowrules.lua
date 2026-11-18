@@ -15,6 +15,8 @@ hl.window_rule({
 -- Jugoo popups: positioned by the shell, not Hyprland.
 -- Must accept focus so an outside click changes the active window and
 -- PopupOutsideDismiss can close without eating that click.
+-- popin fijo (no el windowsIn aleatorio). Reglas más específicas (mazo,
+-- toasts…) pueden volver a poner no_anim.
 hl.window_rule({
     name = "shell-popups",
     match = { title = "^Jugoo " },
@@ -24,6 +26,8 @@ hl.window_rule({
     no_focus = false,
     no_initial_focus = false,
     focus_on_activate = true,
+    no_anim = false,
+    animation = "popin 70%",
 })
 
 hl.window_rule({
@@ -350,6 +354,7 @@ hl.window_rule({
     size = { "1110", "625" },
     center = true,
     tag = "+autoplace",
+    opacity = "1.0 override",
 })
 
 hl.window_rule({
@@ -392,7 +397,10 @@ hl.window_rule({
 
 hl.window_rule({ match = { class = "^(.*\\.exe)$", float = true }, monitor = PRIMARY_MONITOR, center = true, fullscreen_state = 0 })
 hl.window_rule({ match = { class = "^(.*[Ll]auncher.*)$" }, float = true, monitor = PRIMARY_MONITOR })
-hl.window_rule({ match = { class = "^(vesktop|discord)$" }, monitor = PRIMARY_MONITOR })
+
+-- Discord vive en el scratchpad (SUPER+S / SUPER+SHIFT+S); Hyprland lo crea si no existe.
+-- Debe ser un special con nombre: el "special" a secas usa un id fijo y la regla crearía un duplicado.
+hl.window_rule({ match = { class = "^(vesktop|discord)$" }, monitor = PRIMARY_MONITOR, workspace = "special:scratch" })
 hl.window_rule({ match = { class = "^(.*[Cc]alc.*)$" }, float = true, size = { "max(monitor_w, monitor_h)*0.17", "min(monitor_w, monitor_h)*0.43" }, tag = "+autoplace" })
 hl.window_rule({ match = { class = "^(org\\.kde\\.keditfiletype)$" }, float = true })
 hl.window_rule({ match = { class = "^(org\\.kde\\.ark)$" }, size = { "max(monitor_w, monitor_h)*0.40", "min(monitor_w, monitor_h)*0.40" }, tag = "+autoplace" })
@@ -444,6 +452,8 @@ hl.window_rule({ match = { class = terminals }, opacity = "1.0 override" })
 hl.window_rule({ match = { class = "^(mpv|org.kde.haruna|.*plex.*|org\\.kde\\.gwenview|.*vlc.*)$" }, opacity = "1.0 override" })
 
 -- Float Utility Windows (las que sueles abrir tú)
+hl.window_rule({ match = { class = "^(com\\.gabm\\.satty)$" }, float = true, opacity = "1.0 override" })
+
 local floatApps = {
     { class = "^(kvantummanager|qt[56]ct|nwg-look)$" },
     { class = "^(org.pulseaudio.pavucontrol|blueman-manager|nm-applet|nm-connection-editor)$" },

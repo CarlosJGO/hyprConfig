@@ -260,8 +260,9 @@ hl.on("window.open_early", function(window)
     if not window then
         return
     end
-    -- Los popups de la barra tienen su propia salida desde el bloque.
-    -- No cambiar windowsIn global al abrirlos.
+    -- Popups Jugoo: la regla de spawn fija `animation = "popin 70%"`.
+    -- No re-tirar el windowsIn global al abrirlos (eso afectaría la siguiente
+    -- ventana normal).
     local title = window.title or ""
     if title:match("^Jugoo ") then
         return
