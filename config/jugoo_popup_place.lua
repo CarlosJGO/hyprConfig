@@ -47,6 +47,7 @@ local function load_spawns()
                 local_x = local_x or x,
                 local_y = local_y or y,
                 monitor = monitor or "",
+                no_anim = tonumber(rest:match('"no_anim"%s*:%s*(-?%d+)')) or -1,
                 union_local_x = union_local_x,
                 union_local_y = union_local_y,
                 union_w = union_w or 0,
@@ -69,7 +70,7 @@ local function save_spawns(spawns)
             monitor = json_string(pos.monitor)
         end
         parts[#parts + 1] = string.format(
-            "%s:{\"x\":%d,\"y\":%d,\"local_x\":%d,\"local_y\":%d,\"monitor\":%s,\"union_local_x\":%d,\"union_local_y\":%d,\"union_w\":%d,\"union_h\":%d,\"origin_local_x\":%d,\"origin_local_y\":%d,\"origin_w\":%d,\"origin_h\":%d}",
+            "%s:{\"x\":%d,\"y\":%d,\"local_x\":%d,\"local_y\":%d,\"monitor\":%s,\"union_local_x\":%d,\"union_local_y\":%d,\"union_w\":%d,\"union_h\":%d,\"origin_local_x\":%d,\"origin_local_y\":%d,\"origin_w\":%d,\"origin_h\":%d,\"no_anim\":%d}",
             json_string(title),
             pos.x,
             pos.y,
@@ -83,7 +84,8 @@ local function save_spawns(spawns)
             pos.origin_local_x or pos.local_x,
             pos.origin_local_y or pos.local_y,
             pos.origin_w or 0,
-            pos.origin_h or 0
+            pos.origin_h or 0,
+            pos.no_anim or -1
         )
     end
     local file = io.open(SPAWN_FILE, "w")
@@ -104,6 +106,9 @@ local function apply_spawn_rule(title, pos)
     -- la ventana sigue siendo un toplevel normal.
     if (pos.origin_w or 0) >= 8 and (pos.origin_h or 0) >= 8 then
         rule.animation = "popin 70%"
+    end
+    if pos.no_anim == 0 or pos.no_anim == 1 then
+        rule.no_anim = pos.no_anim == 1
     end
     if pos.monitor and pos.monitor ~= "" then
         rule.monitor = pos.monitor

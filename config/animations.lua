@@ -260,11 +260,10 @@ hl.on("window.open_early", function(window)
     if not window then
         return
     end
-    -- Popups Jugoo: la regla de spawn fija `animation = "popin 70%"`.
-    -- No re-tirar el windowsIn global al abrirlos (eso afectaría la siguiente
-    -- ventana normal).
+    -- GTK Jugoo conserva su entrada propia. Las tarjetas Qt participan
+    -- del mismo catálogo de entrada que las demás ventanas del escritorio.
     local title = window.title or ""
-    if title:match("^Jugoo ") then
+    if title:match("^Jugoo ") and not title:match("^Jugoo Qt ") then
         return
     end
     apply_window_in_effect(WINDOW_IN_EFFECTS[math.random(#WINDOW_IN_EFFECTS)])
